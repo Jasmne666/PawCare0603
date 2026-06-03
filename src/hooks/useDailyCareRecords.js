@@ -33,6 +33,18 @@ function getFriendlyError(error) {
   if (message.includes('daily_care_records')) {
     return '今日照护记录表还没创建。请先运行 supabase/daily_care_records.sql。';
   }
+  if (
+    message.includes('food_amount_grams') ||
+    message.includes('food_amount_mode') ||
+    message.includes('food_amount_level') ||
+    message.includes('food_brand') ||
+    message.includes('food_serving_count') ||
+    message.includes('walk_count') ||
+    message.includes('species_care_tags') ||
+    message.includes('custom_care_items')
+  ) {
+    return '记录扩展字段还没创建。请先运行 supabase/daily_care_records_extra_fields.sql。';
+  }
   return message || '保存今日照护记录失败';
 }
 
@@ -42,10 +54,19 @@ function buildPayload({ patch, petId, record, recordDate, userId }) {
         abnormal_notes: record.abnormal_notes,
         activity: record.activity,
         appetite: record.appetite,
+        food_amount_grams: record.food_amount_grams,
+        food_amount_level: record.food_amount_level,
+        food_amount_mode: record.food_amount_mode,
+        food_brand: record.food_brand,
+        food_serving_count: record.food_serving_count,
         interaction: record.interaction,
         mood: record.mood,
+        species_care_tags: record.species_care_tags,
+        custom_care_items: record.custom_care_items,
         stool: record.stool,
         water: record.water,
+        walk_count: record.walk_count,
+        walk_minutes: record.walk_minutes,
       }
     : {};
 
@@ -154,7 +175,7 @@ export function useDailyCareRecords(petId) {
   }, [loadTodayRecord]);
 
   const saveCareRecord = useCallback(
-    async (patch, feedbackMessage = '今日小报告已保存 🐾') => {
+    async (patch, feedbackMessage = '今日小报告已保存 🐾', recordDate = today, baseRecord = record) => {
       if (!user) throw new Error('请先登录');
       if (!petId) throw new Error('请先选择宠物');
       setSaving(true);
@@ -165,8 +186,8 @@ export function useDailyCareRecords(petId) {
         const payload = buildPayload({
           patch,
           petId,
-          record,
-          recordDate: today,
+          record: baseRecord,
+          recordDate,
           userId: user.id,
         });
         const { data, error: saveError } = await supabase
@@ -176,7 +197,7 @@ export function useDailyCareRecords(petId) {
           .single();
 
         if (saveError) throw saveError;
-        setRecord(data);
+        if (recordDate === today) setRecord(data);
         setFeedback(feedbackMessage);
         return data;
       } catch (err) {
@@ -188,6 +209,12 @@ export function useDailyCareRecords(petId) {
       }
     },
     [petId, record, today, user],
+  );
+
+  const saveCareRecordForDate = useCallback(
+    (recordDate, patch, baseRecord = null) =>
+      saveCareRecord(patch, '记录已保存', recordDate, baseRecord),
+    [saveCareRecord],
   );
 
   const saveQuickRecord = useCallback(
@@ -211,10 +238,11 @@ export function useDailyCareRecords(petId) {
       loading,
       record,
       saveCareRecord,
+      saveCareRecordForDate,
       saveQuickRecord,
       saving,
       today,
     }),
-    [error, feedback, loadTodayRecord, loading, record, saveCareRecord, saveQuickRecord, saving, today],
+    [error, feedback, loadTodayRecord, loading, record, saveCareRecord, saveCareRecordForDate, saveQuickRecord, saving, today],
   );
 }

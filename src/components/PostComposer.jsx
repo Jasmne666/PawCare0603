@@ -1,16 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
 
-function PostComposer({ open, onClose, onSubmit, pet, saving, type = 'normal' }) {
+function PostComposer({
+  initialContent = '',
+  initialImageUrls = [],
+  open,
+  onClose,
+  onSubmit,
+  pet,
+  saving,
+  type = 'normal',
+}) {
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
+  const [imageUrls, setImageUrls] = useState([]);
   const [publishPet, setPublishPet] = useState(true);
-  const previews = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
+  const filePreviews = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
+  const previews = useMemo(() => [...imageUrls, ...filePreviews], [filePreviews, imageUrls]);
+
+  useEffect(() => {
+    if (!open) return;
+    setContent(initialContent);
+    setImageUrls(initialImageUrls);
+  }, [initialContent, initialImageUrls, open]);
 
   useEffect(
     () => () => {
-      previews.forEach((url) => URL.revokeObjectURL(url));
+      filePreviews.forEach((url) => URL.revokeObjectURL(url));
     },
-    [previews],
+    [filePreviews],
   );
 
   if (!open) return null;
@@ -18,6 +35,7 @@ function PostComposer({ open, onClose, onSubmit, pet, saving, type = 'normal' })
   const reset = () => {
     setContent('');
     setFiles([]);
+    setImageUrls([]);
     setPublishPet(true);
   };
 
@@ -27,7 +45,7 @@ function PostComposer({ open, onClose, onSubmit, pet, saving, type = 'normal' })
   };
 
   const handleSubmit = async () => {
-    await onSubmit({ content, files, publishPet, type });
+    await onSubmit({ content, files, imageUrls, publishPet, type });
     reset();
   };
 
@@ -70,7 +88,7 @@ function PostComposer({ open, onClose, onSubmit, pet, saving, type = 'normal' })
               type="file"
             />
           </label>
-          <span className="text-xs text-paw-muted">{files.length}/6</span>
+          <span className="text-xs text-paw-muted">{previews.length}/6</span>
         </div>
 
         {pet && (

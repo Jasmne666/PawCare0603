@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import DailyPetTipCard from './DailyPetTipCard.jsx';
 import { getHealthScoreColor } from '../utils/healthScore.js';
 import { calcPetAge } from '../utils/petAge.js';
 
@@ -53,7 +52,7 @@ function ScoreRing({ score }) {
   );
 }
 
-export function HomeHeader({ pet }) {
+export function HomeHeader({ pet, relationName = '主人' }) {
   return (
     <section className="space-y-3">
       <div className="flex items-start justify-between gap-3">
@@ -61,13 +60,14 @@ export function HomeHeader({ pet }) {
           <p className="text-sm font-medium text-paw-muted">
             今天是{new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}
           </p>
-          <h1 className="mt-2 font-title text-3xl font-semibold leading-tight">你好，{pet.name}的主人</h1>
+          <h1 className="mt-2 font-title text-3xl font-semibold leading-tight">
+            你好，{pet.name}的{relationName}
+          </h1>
         </div>
         <Link to="/profile">
           <AvatarView pet={pet} sizeClass="h-11 w-11 text-2xl" />
         </Link>
       </div>
-      <DailyPetTipCard />
     </section>
   );
 }

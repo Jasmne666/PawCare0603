@@ -4,7 +4,9 @@ import DailyCareDetailCard from '../components/DailyCareDetailCard.jsx';
 import HealthCalendarGrid from '../components/HealthCalendarGrid.jsx';
 import PetSwitcher from '../components/PetSwitcher.jsx';
 import PetTodoComposer from '../components/PetTodoComposer.jsx';
-import { useMonthlyDailyCareRecords } from '../hooks/useDailyCareRecords.js';
+import RecordEntryModal from '../components/RecordEntryModal.jsx';
+import RecordEntryRows from '../components/RecordEntryRows.jsx';
+import { useDailyCareRecords, useMonthlyDailyCareRecords } from '../hooks/useDailyCareRecords.js';
 import { usePetTodos } from '../hooks/usePetTodos.js';
 import { usePets } from '../hooks/usePets.js';
 import { formatMonthTitle, getLocalDateString, moveMonth } from '../utils/careCalendar.js';
@@ -45,9 +47,16 @@ function groupByDate(items, key) {
 function Records() {
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => getLocalDateString());
+  const [activeSection, setActiveSection] = useState('');
   const [todoComposerOpen, setTodoComposerOpen] = useState(false);
   const { activePetId, error: petError, loading: petLoading, pet, pets, selectPet } = usePets();
-  const { error: careError, loading: careLoading, records } = useMonthlyDailyCareRecords(pet?.id, monthDate);
+  const { error: careError, loadMonthRecords, loading: careLoading, records } = useMonthlyDailyCareRecords(pet?.id, monthDate);
+  const {
+    error: todayCareError,
+    loading: todayCareLoading,
+    saveCareRecordForDate,
+    saving: todayCareSaving,
+  } = useDailyCareRecords(pet?.id);
   const { createTodo, error: todoError, loading: todoLoading, saving: todoSaving, todos } = usePetTodos(pet?.id);
   const recordsByDate = useMemo(() => groupByDate(records, 'record_date'), [records]);
   const todosByDate = useMemo(() => groupByDate(todos, 'due_date'), [todos]);
@@ -61,6 +70,12 @@ function Records() {
     setSelectedDate(getLocalDateString(new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1)));
   };
 
+  const saveSelectedCare = async (patch) => {
+    await saveCareRecordForDate(selectedDate, patch, selectedRecord);
+    await loadMonthRecords();
+    setActiveSection('');
+  };
+
   if (petLoading) return <LoadingCard title="正在读取宠物档案" />;
   if (!pet) return <NoPetCard />;
 
@@ -71,7 +86,7 @@ function Records() {
           <p className="text-sm font-medium text-paw-muted">记录</p>
           <h1 className="mt-2 font-title text-3xl font-semibold">健康手账</h1>
           <p className="mt-2 text-sm leading-6 text-paw-muted">
-            月历里看每天状态，也能安排未来 30 天的照护待办。
+            先选日期，再像手账一样补充吃饭、喝水、便便和状态。
           </p>
         </div>
         <PetSwitcher activePetId={activePetId} label="当前宠物" onSelectPet={selectPet} pets={pets} />
@@ -116,12 +131,31 @@ function Records() {
         />
       )}
 
+      <RecordEntryRows onOpenSection={setActiveSection} pet={pet} record={selectedRecord} />
+
       <DailyCareDetailCard
         dateKey={selectedDate}
         onAddTodo={() => setTodoComposerOpen(true)}
+        onEditRecord={() => setActiveSection('food')}
         pet={pet}
         record={selectedRecord}
         todos={selectedTodos}
+      />
+
+      {todayCareError && (
+        <section className="rounded-card border border-paw-danger bg-paw-danger/10 p-4 text-sm text-paw-danger">
+          {todayCareError}
+        </section>
+      )}
+
+      <RecordEntryModal
+        onClose={() => setActiveSection('')}
+        onSave={saveSelectedCare}
+        open={Boolean(activeSection)}
+        pet={pet}
+        record={selectedRecord}
+        saving={todayCareLoading || todayCareSaving}
+        sectionId={activeSection}
       />
 
       <PetTodoComposer

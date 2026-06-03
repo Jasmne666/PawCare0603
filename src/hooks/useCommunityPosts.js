@@ -76,7 +76,7 @@ export function useCommunityPosts({ feed = 'all', postType = 'normal' } = {}) {
   }, [loadPosts]);
 
   const createPost = useCallback(
-    async ({ content, files, pet, publishPet = true, type = postType }) => {
+    async ({ content, files = [], imageUrls = [], pet, publishPet = true, type = postType }) => {
       if (!user) throw new Error('请先登录');
       if (!content.trim()) throw new Error('请输入帖子内容');
       setSaving(true);
@@ -86,16 +86,17 @@ export function useCommunityPosts({ feed = 'all', postType = 'normal' } = {}) {
         if (publishPet && pet?.id && !pet.is_public) {
           await supabase.from('pets').update({ is_public: true }).eq('id', pet.id);
         }
-        const imageUrls = await uploadPostImages(files, user.id);
-        const { error: insertError } = await supabase.from('posts').insert({
+        const uploadedImageUrls = await uploadPostImages(files, user.id);
+        const { data, error: insertError } = await supabase.from('posts').insert({
           user_id: user.id,
           pet_id: pet?.id ?? null,
           content: content.trim(),
-          images: imageUrls,
+          images: [...imageUrls, ...uploadedImageUrls],
           post_type: type,
-        });
+        }).select('id').single();
         if (insertError) throw insertError;
         await loadPosts();
+        return data;
       } catch (err) {
         const message = err.message || '发布失败';
         setError(message);

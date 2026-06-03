@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import CommunityFeed from '../components/CommunityFeed.jsx';
 import PetSwitcher from '../components/PetSwitcher.jsx';
 import PostComposer from '../components/PostComposer.jsx';
@@ -7,6 +8,7 @@ import { useCommunityPosts } from '../hooks/useCommunityPosts.js';
 import { usePets } from '../hooks/usePets.js';
 
 function Cloud() {
+  const location = useLocation();
   const [composerOpen, setComposerOpen] = useState(false);
   const { user } = useAuth();
   const { activePetId, loading: petLoading, pet, pets, selectPet } = usePets();
@@ -20,9 +22,18 @@ function Cloud() {
     toggleFollowPet,
     toggleLike,
   } = useCommunityPosts({ postType: 'cloud_walk' });
+  const stickerDraft = useMemo(() => location.state || {}, [location.state]);
+  const stickerDraftImages = useMemo(
+    () => (stickerDraft.stickerImageUrl ? [stickerDraft.stickerImageUrl] : []),
+    [stickerDraft.stickerImageUrl],
+  );
 
-  const handleCreatePost = async ({ content, files, publishPet }) => {
-    await createPost({ content, files, pet, publishPet, type: 'cloud_walk' });
+  useEffect(() => {
+    if (stickerDraft.stickerId) setComposerOpen(true);
+  }, [stickerDraft.stickerId]);
+
+  const handleCreatePost = async ({ content, files, imageUrls, publishPet }) => {
+    await createPost({ content, files, imageUrls, pet, publishPet, type: 'cloud_walk' });
     setComposerOpen(false);
   };
 
@@ -69,6 +80,8 @@ function Cloud() {
       />
 
       <PostComposer
+        initialContent={stickerDraft.defaultContent || ''}
+        initialImageUrls={stickerDraftImages}
         onClose={() => setComposerOpen(false)}
         onSubmit={handleCreatePost}
         open={composerOpen}

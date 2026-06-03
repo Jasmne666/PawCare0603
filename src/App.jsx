@@ -11,6 +11,7 @@ import Log from './pages/Log.jsx';
 import Login from './pages/Login.jsx';
 import Profile from './pages/Profile.jsx';
 import Records from './pages/Records.jsx';
+import Stickers from './pages/Stickers.jsx';
 
 const protectedRoutes = [
   { path: '/', element: <Home /> },
@@ -22,6 +23,7 @@ const protectedRoutes = [
   { path: '/profile', element: <Profile /> },
   { path: '/community', element: <Community /> },
   { path: '/cloud', element: <Cloud /> },
+  { path: '/stickers', element: <Stickers /> },
 ];
 
 function LoadingScreen() {

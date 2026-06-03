@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { dailyCareSummaryFields, getDailyCareLabel } from '../data/dailyCareOptions.js';
 import { getPetTodoIcon } from '../data/petTodoOptions.js';
 import { getCareFace, getCareStatusLevel } from '../utils/careCalendar.js';
@@ -14,6 +13,42 @@ function getStatusText(level) {
   if (level === 'mild') return '有一点小波动';
   if (level === 'normal') return '整体状态不错';
   return '还没有记录';
+}
+
+function formatFoodAmount(record) {
+  if (record.food_amount_mode === 'grams' && record.food_amount_grams) {
+    return `${record.food_amount_grams}g`;
+  }
+  return getDailyCareLabel('appetite', record.food_amount_level || record.appetite);
+}
+
+function ExtraCareDetails({ record }) {
+  const tags = record.species_care_tags || [];
+
+  if (!record.food_amount_grams && !record.walk_count && !record.walk_minutes && !tags.length) return null;
+
+  return (
+    <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="rounded-control bg-paw-background px-3 py-3">
+        <p className="text-[11px] text-paw-muted">🍚 食量</p>
+        <p className="mt-1 text-sm font-semibold text-paw-secondary">{formatFoodAmount(record)}</p>
+      </div>
+      {(record.walk_count || record.walk_minutes) && (
+        <div className="rounded-control bg-paw-background px-3 py-3">
+          <p className="text-[11px] text-paw-muted">🦮 遛狗</p>
+          <p className="mt-1 text-sm font-semibold text-paw-secondary">
+            {record.walk_count || 0} 次 · {record.walk_minutes || 0} 分钟
+          </p>
+        </div>
+      )}
+      {tags.length > 0 && (
+        <div className="col-span-2 rounded-control bg-paw-background px-3 py-3">
+          <p className="text-[11px] text-paw-muted">🐾 小观察</p>
+          <p className="mt-1 text-sm leading-6 text-paw-secondary">{tags.join('、')}</p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function DailyTodoList({ todos }) {
@@ -45,7 +80,7 @@ function DailyTodoList({ todos }) {
   );
 }
 
-function DailyCareDetailCard({ dateKey, onAddTodo, pet, record, todos = [] }) {
+function DailyCareDetailCard({ dateKey, onAddTodo, onEditRecord, pet, record, todos = [] }) {
   const level = getCareStatusLevel(record);
 
   return (
@@ -58,12 +93,13 @@ function DailyCareDetailCard({ dateKey, onAddTodo, pet, record, todos = [] }) {
           </h2>
         </div>
         <div className="flex shrink-0 flex-col gap-2">
-          <Link
+          <button
             className="rounded-control bg-paw-primary px-3 py-2 text-center text-xs font-semibold text-paw-background"
-            to={`/log?date=${dateKey}`}
+            onClick={onEditRecord}
+            type="button"
           >
             {record ? '编辑记录' : '添加记录'}
-          </Link>
+          </button>
           <button
             className="rounded-control border border-paw-border bg-paw-background px-3 py-2 text-xs font-semibold text-paw-secondary"
             onClick={onAddTodo}
@@ -88,6 +124,7 @@ function DailyCareDetailCard({ dateKey, onAddTodo, pet, record, todos = [] }) {
               </div>
             ))}
           </div>
+          <ExtraCareDetails record={record} />
           <div className="mt-3 rounded-control bg-paw-background px-4 py-3">
             <p className="text-[11px] font-semibold text-paw-muted">异常备注</p>
             <p className="mt-1 text-sm leading-6 text-paw-secondary">
@@ -97,7 +134,7 @@ function DailyCareDetailCard({ dateKey, onAddTodo, pet, record, todos = [] }) {
         </>
       ) : (
         <p className="mt-4 rounded-control bg-paw-background px-4 py-3 text-sm leading-6 text-paw-muted">
-          这一天还没有照护记录。可以从首页的“今日照护”卡片快速补一条当天状态。
+          这一天还没有照护记录。点击上方任意记录栏，就能补充当天状态。
         </p>
       )}
 

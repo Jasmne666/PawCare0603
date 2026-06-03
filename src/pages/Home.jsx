@@ -1,22 +1,18 @@
-import { Link, useNavigate } from 'react-router-dom';
-import CareReminderList from '../components/CareReminderList.jsx';
-import DailyCareCard from '../components/DailyCareCard.jsx';
-import {
-  AlertList,
-  HomeHeader,
-  PetScoreCard,
-  TodayOverview,
-} from '../components/HomeDashboardSections.jsx';
-import { HealthTrendDashboard, RecentLogList } from '../components/HomeRecordSections.jsx';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import DailyPetTipCard from '../components/DailyPetTipCard.jsx';
+import { HomeHeader } from '../components/HomeDashboardSections.jsx';
 import PetSwitcher from '../components/PetSwitcher.jsx';
+import StickerCaptureModal from '../components/StickerCaptureModal.jsx';
+import TodayStickerCard from '../components/TodayStickerCard.jsx';
 import UpcomingTodosCard from '../components/UpcomingTodosCard.jsx';
+import { getDailyCareLabel } from '../data/dailyCareOptions.js';
 import { useDailyCareRecords } from '../hooks/useDailyCareRecords.js';
+import { usePetStickers } from '../hooks/usePetStickers.js';
 import { usePetTodos } from '../hooks/usePetTodos.js';
 import { usePets } from '../hooks/usePets.js';
-import { useRecentHealthLogs } from '../hooks/useRecentHealthLogs.js';
-import { getHomeAlerts } from '../utils/alerts.js';
-import { getCareReminders } from '../utils/careReminders.js';
-import { calcHealthScore } from '../utils/healthScore.js';
+import { useUserProfile } from '../hooks/useUserProfile.js';
+import { getCareFace } from '../utils/careCalendar.js';
 
 function LoadingCard({ title }) {
   return (
@@ -30,32 +26,53 @@ function LoadingCard({ title }) {
 function NoPetCard() {
   return (
     <section className="rounded-card border border-paw-border bg-paw-card p-5">
-      <p className="text-sm font-medium text-paw-muted">健康总览</p>
-      <h1 className="mt-2 font-title text-3xl font-semibold">请先创建宠物档案</h1>
+      <p className="text-sm font-medium text-paw-muted">PawCare</p>
+      <h1 className="mt-2 font-title text-3xl font-semibold">先添加一只宠物吧</h1>
       <p className="mt-3 text-sm leading-6 text-paw-muted">
-        首页需要根据宠物档案和每日记录生成健康分、提醒和趋势。
+        有了宠物档案后，就可以开始收集贴纸、记录日常和使用 AI 管家。
       </p>
       <Link
         className="mt-5 inline-flex rounded-control bg-paw-primary px-4 py-3 text-sm font-semibold text-paw-background"
         to="/profile"
       >
-        去创建档案
+        去添加宠物
       </Link>
     </section>
   );
 }
 
+function TodayStatusHint({ loading, pet, record }) {
+  const title = record ? '今天已记录｜查看详情' : '今天还没记录｜去记录';
+
+  return (
+    <Link
+      className="flex items-center gap-3 rounded-card border border-paw-border bg-paw-card p-4"
+      to="/records"
+    >
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card bg-paw-background text-2xl">
+        {loading ? '🐾' : getCareFace(record, pet)}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-paw-primary">{title}</p>
+        <p className="mt-1 truncate text-xs text-paw-muted">
+          {record
+            ? `精神 ${getDailyCareLabel('mood', record.mood)} · 互动 ${getDailyCareLabel('interaction', record.interaction)}`
+            : '详细吃饭、喝水、便便和互动都放在记录页。'}
+        </p>
+      </div>
+      <span className="text-paw-muted">›</span>
+    </Link>
+  );
+}
+
 function Home() {
-  const navigate = useNavigate();
+  const [captureFile, setCaptureFile] = useState(null);
   const { activePetId, error: petError, loading: petLoading, pet, pets, selectPet } = usePets();
-  const { error: logError, loading: logLoading, logs } = useRecentHealthLogs(pet?.id, 7);
+  const { loading: profileLoading, profile } = useUserProfile();
   const {
     error: dailyCareError,
-    feedback: dailyCareFeedback,
     loading: dailyCareLoading,
     record: dailyCareRecord,
-    saveCareRecord,
-    saving: dailyCareSaving,
   } = useDailyCareRecords(pet?.id);
   const {
     completeTodo,
@@ -65,38 +82,29 @@ function Home() {
     saving: todoSaving,
     todos,
   } = usePetTodos(pet?.id);
+  const {
+    error: stickerError,
+    loading: stickerLoading,
+    saveSticker,
+    saving: stickerSaving,
+    todayStickers,
+  } = usePetStickers(pet?.id);
 
-  if (petLoading) return <LoadingCard title="正在读取健康总览" />;
+  if (petLoading || profileLoading) return <LoadingCard title="正在打开今天的小手账" />;
   if (!pet) return <NoPetCard />;
 
-  const score = calcHealthScore(logs);
-  const alerts = getHomeAlerts(pet, logs);
-  const careReminders = getCareReminders(pet, logs);
-  const today = new Date().toISOString().slice(0, 10);
-  const todayLog = logs.find((log) => log.log_date === today);
-  const error = petError || logError;
+  const relationName = profile?.pet_relation_name || '主人';
+  const error = petError || dailyCareError;
 
-  const handleAlertClick = (alert) => {
-    navigate('/ai', { state: { initialQuestion: alert.question } });
-  };
-
-  const handleCareSave = async (patch, feedbackMessage) => {
-    try {
-      await saveCareRecord(patch, feedbackMessage);
-    } catch {
-      // 错误已在今日照护卡片中展示。
-    }
+  const handleStickerSave = async (payload) => {
+    await saveSticker(payload);
+    setCaptureFile(null);
   };
 
   return (
     <div className="space-y-4">
-      <HomeHeader pet={pet} />
-      <PetSwitcher
-        activePetId={activePetId}
-        label="健康数据属于"
-        onSelectPet={selectPet}
-        pets={pets}
-      />
+      <HomeHeader pet={pet} relationName={relationName} />
+      <PetSwitcher activePetId={activePetId} label="今天陪伴的是" onSelectPet={selectPet} pets={pets} />
 
       {error && (
         <section className="rounded-card border border-paw-danger bg-paw-danger/10 p-4 text-sm text-paw-danger">
@@ -104,15 +112,7 @@ function Home() {
         </section>
       )}
 
-      <DailyCareCard
-        error={dailyCareError}
-        feedback={dailyCareFeedback}
-        loading={dailyCareLoading}
-        onSaveRecord={handleCareSave}
-        pet={pet}
-        record={dailyCareRecord}
-        saving={dailyCareSaving}
-      />
+      <TodayStatusHint loading={dailyCareLoading} pet={pet} record={dailyCareRecord} />
 
       <UpcomingTodosCard
         error={todoError}
@@ -124,35 +124,25 @@ function Home() {
         todos={todos}
       />
 
-      <PetScoreCard pet={pet} score={score} />
-      <AlertList alerts={alerts} onAlertClick={handleAlertClick} />
-      <TodayOverview todayLog={todayLog} />
-      <CareReminderList reminders={careReminders} />
+      <TodayStickerCard
+        error={stickerError}
+        loading={stickerLoading}
+        onFileSelected={setCaptureFile}
+        pet={pet}
+        stickers={todayStickers}
+      />
 
-      <div className="grid grid-cols-2 gap-3">
-        <Link
-          className="rounded-card border border-paw-healthy bg-paw-healthy/10 p-4 text-left"
-          to="/log"
-        >
-          <p className="text-2xl">📝</p>
-          <p className="mt-2 text-sm font-semibold text-paw-primary">记录今日</p>
-          <p className="mt-1 text-xs text-paw-muted">饮食、排便、心情</p>
-        </Link>
-        <Link className="rounded-card bg-paw-primary p-4 text-left text-paw-background" to="/ai">
-          <p className="text-2xl">✨</p>
-          <p className="mt-2 text-sm font-semibold">AI 健康顾问</p>
-          <p className="mt-1 text-xs text-paw-background/60">基于近期数据分析</p>
-        </Link>
-      </div>
+      <DailyPetTipCard />
 
-      {logLoading ? (
-        <LoadingCard title="正在读取最近记录" />
-      ) : (
-        <>
-          <HealthTrendDashboard logs={logs} />
-          <RecentLogList logs={logs} />
-        </>
-      )}
+      <StickerCaptureModal
+        defaultPetId={pet.id}
+        file={captureFile}
+        onClose={() => setCaptureFile(null)}
+        onSave={handleStickerSave}
+        open={Boolean(captureFile)}
+        pets={pets}
+        saving={stickerSaving}
+      />
     </div>
   );
 }
