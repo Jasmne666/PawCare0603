@@ -27,15 +27,6 @@ function PetHealthForm({ form, inputClass, setValue }) {
         ))}
       </div>
 
-      <ProfileField label="头像图片链接" hint="可选">
-        <input
-          value={form.avatar_url}
-          onChange={(event) => setValue('avatar_url', event.target.value)}
-          placeholder="https://..."
-          className={inputClass}
-        />
-      </ProfileField>
-
       <ProfileField label="已知疾病 / 医疗备注">
         <textarea
           value={form.medical_notes}
@@ -50,4 +41,3 @@ function PetHealthForm({ form, inputClass, setValue }) {
 }
 
 export default PetHealthForm;
-

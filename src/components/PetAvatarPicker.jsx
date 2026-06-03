@@ -1,4 +1,4 @@
-const avatars = ['🐱', '🐶', '🐰', '🐹', '🐾', '🦊', '🐻', '🐼'];
+const avatars = ['🐱', '🐶', '🐰', '🐹', '🐾', '🐻', '🐍', '🐦'];
 
 function PetAvatarPicker({ value, onChange }) {
   return (
@@ -22,4 +22,3 @@ function PetAvatarPicker({ value, onChange }) {
 }
 
 export default PetAvatarPicker;
-

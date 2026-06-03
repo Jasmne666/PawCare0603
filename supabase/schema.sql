@@ -1,14 +1,21 @@
 -- PawCare Supabase 初始化脚本
--- 当前只创建阶段 3 + 阶段 4 需要的基础数据表。
+-- 当前创建核心数据表；社区功能请另外运行 supabase/community_schema.sql。
 -- 使用方法：复制整份内容到 Supabase SQL Editor，点击 Run。
 
 create extension if not exists pgcrypto;
 
--- 阶段 7 才需要社区表，当前先删除，避免提前引入无关复杂度。
-drop table if exists public.pet_follows cascade;
-drop table if exists public.comments cascade;
-drop table if exists public.post_likes cascade;
-drop table if exists public.posts cascade;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'pet-avatars',
+  'pet-avatars',
+  true,
+  5242880,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -185,4 +192,32 @@ create policy "Users manage own AI conversations" on public.ai_conversations
         select id from public.pets where user_id = auth.uid()
       )
     )
+  );
+
+drop policy if exists "Anyone reads pet avatars" on storage.objects;
+create policy "Anyone reads pet avatars" on storage.objects
+  for select using (bucket_id = 'pet-avatars');
+
+drop policy if exists "Users upload own pet avatars" on storage.objects;
+create policy "Users upload own pet avatars" on storage.objects
+  for insert to authenticated with check (
+    bucket_id = 'pet-avatars'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists "Users update own pet avatars" on storage.objects;
+create policy "Users update own pet avatars" on storage.objects
+  for update to authenticated using (
+    bucket_id = 'pet-avatars'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  ) with check (
+    bucket_id = 'pet-avatars'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists "Users delete own pet avatars" on storage.objects;
+create policy "Users delete own pet avatars" on storage.objects
+  for delete to authenticated using (
+    bucket_id = 'pet-avatars'
+    and auth.uid()::text = (storage.foldername(name))[1]
   );

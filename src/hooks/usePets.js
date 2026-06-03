@@ -1,74 +1,49 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  toPetForm,
+  toPetPayload,
+  validatePetForm,
+} from '../lib/petForm.js';
+import { normalizePetAvatarUrl, uploadPetAvatar } from '../lib/petAvatarStorage.js';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from './useAuth.js';
 
-export const emptyPetForm = {
-  id: '',
-  name: '',
-  species: '猫',
-  breed: '',
-  gender: '未知',
-  birth_date: '',
-  color: '',
-  weight_kg: '',
-  medical_notes: '无',
-  avatar_url: '',
-  avatar: '🐾',
-  neutered: false,
-  vaccinated: false,
-  is_public: false,
-};
+const ACTIVE_PET_KEY_PREFIX = 'pawcare_active_pet_id';
 
-function toForm(pet) {
-  if (!pet) return emptyPetForm;
+export { emptyPetForm } from '../lib/petForm.js';
 
-  return {
-    id: pet.id ?? '',
-    name: pet.name ?? '',
-    species: pet.species ?? '猫',
-    breed: pet.breed ?? '',
-    gender: pet.gender ?? '未知',
-    birth_date: pet.birth_date ?? '',
-    color: pet.color ?? '',
-    weight_kg: pet.weight_kg ?? '',
-    medical_notes: pet.medical_notes ?? '无',
-    avatar_url: pet.avatar_url ?? '',
-    avatar: pet.avatar ?? '🐾',
-    neutered: Boolean(pet.neutered),
-    vaccinated: Boolean(pet.vaccinated),
-    is_public: Boolean(pet.is_public),
-  };
+function getActivePetStorageKey(userId) {
+  return `${ACTIVE_PET_KEY_PREFIX}:${userId}`;
 }
 
-function toPayload(form, userId) {
-  return {
-    user_id: userId,
-    name: form.name.trim(),
-    species: form.species,
-    breed: form.breed.trim() || null,
-    gender: form.gender || null,
-    birth_date: form.birth_date || null,
-    color: form.color.trim() || null,
-    weight_kg: form.weight_kg === '' ? null : Number(form.weight_kg),
-    medical_notes: form.medical_notes.trim() || '无',
-    avatar_url: form.avatar_url.trim() || null,
-    avatar: form.avatar || '🐾',
-    neutered: form.neutered,
-    vaccinated: form.vaccinated,
-    is_public: form.is_public,
-  };
+function readActivePetId(userId) {
+  if (!userId) return '';
+  return localStorage.getItem(getActivePetStorageKey(userId)) || '';
+}
+
+function persistActivePetId(userId, petId) {
+  if (!userId || !petId) return;
+  localStorage.setItem(getActivePetStorageKey(userId), petId);
 }
 
 export function usePets() {
   const { user } = useAuth();
-  const [pet, setPet] = useState(null);
+  const [pets, setPets] = useState([]);
+  const [activePetId, setActivePetId] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const pet = useMemo(
+    () => pets.find((item) => item.id === activePetId) || pets[0] || null,
+    [activePetId, pets],
+  );
+  const petForm = useMemo(() => toPetForm(pet), [pet]);
+
   const loadPet = useCallback(async () => {
     if (!user) {
-      setPet(null);
+      setPets([]);
+      setActivePetId('');
       setLoading(false);
       return;
     }
@@ -81,12 +56,18 @@ export function usePets() {
         .from('pets')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order('created_at', { ascending: true });
 
       if (queryError) throw queryError;
-      setPet(data ?? null);
+      const rows = data ?? [];
+      const savedPetId = readActivePetId(user.id);
+      const nextActivePetId = rows.some((row) => row.id === savedPetId)
+        ? savedPetId
+        : rows[0]?.id || '';
+
+      setPets(rows);
+      setActivePetId(nextActivePetId);
+      persistActivePetId(user.id, nextActivePetId);
     } catch (err) {
       setError(err.message || '读取宠物档案失败');
     } finally {
@@ -98,16 +79,28 @@ export function usePets() {
     loadPet();
   }, [loadPet]);
 
+  const selectPet = useCallback(
+    (petId) => {
+      if (!user || !pets.some((item) => item.id === petId)) return;
+      setActivePetId(petId);
+      persistActivePetId(user.id, petId);
+    },
+    [pets, user],
+  );
+
   const savePet = useCallback(
     async (form) => {
       if (!user) throw new Error('请先登录');
-      if (!form.name.trim()) throw new Error('请填写宠物名字');
+      validatePetForm(form);
 
       setSaving(true);
       setError('');
 
       try {
-        const payload = toPayload(form, user.id);
+        const avatarUrl = form.avatar_file
+          ? await uploadPetAvatar(form.avatar_file, user.id)
+          : normalizePetAvatarUrl(form.avatar_url);
+        const payload = toPetPayload(form, user.id, avatarUrl);
         const query = form.id
           ? supabase.from('pets').update(payload).eq('id', form.id).select('*')
           : supabase.from('pets').insert(payload).select('*');
@@ -115,7 +108,14 @@ export function usePets() {
         const { data, error: saveError } = await query.single();
         if (saveError) throw saveError;
 
-        setPet(data);
+        setPets((current) => {
+          const exists = current.some((item) => item.id === data.id);
+          return exists
+            ? current.map((item) => (item.id === data.id ? data : item))
+            : [...current, data];
+        });
+        setActivePetId(data.id);
+        persistActivePetId(user.id, data.id);
         return data;
       } catch (err) {
         const message = err.message || '保存宠物档案失败';
@@ -130,16 +130,18 @@ export function usePets() {
 
   return useMemo(
     () => ({
-      formFromPet: toForm,
+      activePetId,
+      formFromPet: toPetForm,
       loadPet,
       pet,
-      petForm: toForm(pet),
+      petForm,
+      pets,
       loading,
       saving,
       error,
       savePet,
+      selectPet,
     }),
-    [error, loadPet, loading, pet, savePet, saving],
+    [activePetId, error, loadPet, loading, pet, petForm, pets, savePet, saving, selectPet],
   );
 }
-

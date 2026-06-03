@@ -1,18 +1,24 @@
-import PetAvatarPicker from './PetAvatarPicker.jsx';
+import { getSpeciesLabel } from '../data/petOptions.js';
+import PetAvatarSection from './PetAvatarSection.jsx';
+import PetSpeciesBreedFields from './PetSpeciesBreedFields.jsx';
 import ProfileField from './ProfileField.jsx';
 
-const speciesOptions = ['猫', '狗', '兔子', '仓鼠', '其他'];
 const genderOptions = ['未知', '男孩', '女孩'];
 
 function PetBasicInfoForm({ form, inputClass, setValue }) {
+  const avatarSrc = form.avatar_preview_url || form.avatar_url;
+  const speciesLabel =
+    form.species === 'other' ? form.custom_species : getSpeciesLabel(form.species);
+  const breedLabel = form.breed === '其他' ? form.custom_breed : form.breed;
+
   return (
     <>
       <section className="rounded-card border border-paw-border bg-paw-card p-5">
         <div className="mb-5 flex items-center gap-4">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-card border border-paw-border bg-paw-background text-5xl">
-            {form.avatar_url ? (
+            {avatarSrc ? (
               <img
-                src={form.avatar_url}
+                src={avatarSrc}
                 alt={form.name || '宠物头像'}
                 className="h-full w-full object-cover"
               />
@@ -25,15 +31,13 @@ function PetBasicInfoForm({ form, inputClass, setValue }) {
               {form.name || '还没有名字'}
             </h2>
             <p className="mt-1 text-sm text-paw-muted">
-              {form.species} · {form.breed || '未填写品种'}
+              {speciesLabel || '未选择物种'} · {breedLabel || '未填写品种'}
             </p>
           </div>
         </div>
-
-        <ProfileField label="头像表情">
-          <PetAvatarPicker value={form.avatar} onChange={(value) => setValue('avatar', value)} />
-        </ProfileField>
       </section>
+
+      <PetAvatarSection form={form} setValue={setValue} />
 
       <section className="space-y-4 rounded-card border border-paw-border bg-paw-card p-5">
         <h2 className="font-title text-xl font-semibold">基本信息</h2>
@@ -47,48 +51,21 @@ function PetBasicInfoForm({ form, inputClass, setValue }) {
           />
         </ProfileField>
 
-        <ProfileField label="物种">
-          <div className="grid grid-cols-5 gap-2">
-            {speciesOptions.map((species) => (
-              <button
-                key={species}
-                type="button"
-                onClick={() => setValue('species', species)}
-                className={`rounded-control border px-2 py-2 text-sm font-semibold transition ${
-                  form.species === species
-                    ? 'border-paw-healthy bg-[#EEF6F1] text-paw-healthy'
-                    : 'border-paw-border bg-paw-background text-paw-muted'
-                }`}
-              >
-                {species}
-              </button>
-            ))}
-          </div>
-        </ProfileField>
+        <PetSpeciesBreedFields form={form} inputClass={inputClass} setValue={setValue} />
 
-        <div className="grid grid-cols-2 gap-3">
-          <ProfileField label="品种">
-            <input
-              value={form.breed}
-              onChange={(event) => setValue('breed', event.target.value)}
-              placeholder="英国短毛猫"
-              className={inputClass}
-            />
-          </ProfileField>
-          <ProfileField label="性别">
-            <select
-              value={form.gender}
-              onChange={(event) => setValue('gender', event.target.value)}
-              className={inputClass}
-            >
-              {genderOptions.map((gender) => (
-                <option key={gender} value={gender}>
-                  {gender}
-                </option>
-              ))}
-            </select>
-          </ProfileField>
-        </div>
+        <ProfileField label="性别">
+          <select
+            value={form.gender}
+            onChange={(event) => setValue('gender', event.target.value)}
+            className={inputClass}
+          >
+            {genderOptions.map((gender) => (
+              <option key={gender} value={gender}>
+                {gender}
+              </option>
+            ))}
+          </select>
+        </ProfileField>
 
         <div className="grid grid-cols-2 gap-3">
           <ProfileField label="生日">
@@ -126,4 +103,3 @@ function PetBasicInfoForm({ form, inputClass, setValue }) {
 }
 
 export default PetBasicInfoForm;
-

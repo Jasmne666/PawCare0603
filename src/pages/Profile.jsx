@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import PetBasicInfoForm from '../components/PetBasicInfoForm.jsx';
 import PetHealthForm from '../components/PetHealthForm.jsx';
 import PetProfileHeader from '../components/PetProfileHeader.jsx';
+import PetSwitcher from '../components/PetSwitcher.jsx';
 import { emptyPetForm, usePets } from '../hooks/usePets.js';
 import { useAuth } from '../hooks/useAuth.js';
 
@@ -10,7 +11,7 @@ const inputClass =
 
 function Profile() {
   const { signOut, user } = useAuth();
-  const { error, loading, petForm, savePet, saving } = usePets();
+  const { activePetId, error, loading, petForm, pets, savePet, saving, selectPet } = usePets();
   const [form, setForm] = useState(emptyPetForm);
   const [notice, setNotice] = useState('');
   const [formError, setFormError] = useState('');
@@ -21,6 +22,12 @@ function Profile() {
 
   const setValue = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const handleCreatePet = () => {
+    setNotice('');
+    setFormError('');
+    setForm(emptyPetForm);
   };
 
   const handleSave = async (event) => {
@@ -56,6 +63,13 @@ function Profile() {
   return (
     <form onSubmit={handleSave} className="space-y-4">
       <PetProfileHeader email={user?.email} form={form} onSignOut={handleSignOut} />
+      <PetSwitcher
+        activePetId={activePetId}
+        label="我的宠物"
+        onCreatePet={handleCreatePet}
+        onSelectPet={selectPet}
+        pets={pets}
+      />
 
       {(notice || formError || error) && (
         <div

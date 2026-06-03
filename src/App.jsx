@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import BottomNav from './components/BottomNav.jsx';
 import { AuthProvider, useAuth } from './hooks/useAuth.js';
 import AI from './pages/AI.jsx';
+import Calendar from './pages/Calendar.jsx';
 import Cloud from './pages/Cloud.jsx';
 import Community from './pages/Community.jsx';
 import History from './pages/History.jsx';
@@ -14,6 +15,7 @@ const protectedRoutes = [
   { path: '/', element: <Home /> },
   { path: '/log', element: <Log /> },
   { path: '/ai', element: <AI /> },
+  { path: '/calendar', element: <Calendar /> },
   { path: '/history', element: <History /> },
   { path: '/profile', element: <Profile /> },
   { path: '/community', element: <Community /> },
