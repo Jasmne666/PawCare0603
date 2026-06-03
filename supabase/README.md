@@ -12,16 +12,14 @@
 6. 粘贴到 SQL Editor。
 7. 点击 `Run`。
 
-执行成功后，左侧 `Table Editor` 里应该能看到：
+执行成功后，左侧 `Table Editor` 里应该能看到当前阶段需要的 4 张表：
 
 - `profiles`
 - `pets`
 - `health_logs`
-- `posts`
-- `post_likes`
-- `comments`
-- `pet_follows`
 - `ai_conversations`
+
+社区相关表会在阶段 7 再创建，当前不要提前建。
 
 ## 注意
 
