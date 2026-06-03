@@ -97,6 +97,75 @@ export const dailyCareSummaryFields = [
   { icon: '🎾', key: 'interaction', label: '互动' },
 ];
 
+export const dailyCareDetailGroups = [
+  {
+    icon: '🍚',
+    key: 'appetite',
+    label: '吃饭',
+    options: [
+      ['normal', '正常'],
+      ['low', '偏少'],
+      ['high', '偏多'],
+      ['none', '没吃'],
+    ],
+  },
+  {
+    icon: '💧',
+    key: 'water',
+    label: '喝水',
+    options: [
+      ['normal', '正常'],
+      ['low', '偏少'],
+      ['high', '偏多'],
+    ],
+  },
+  {
+    icon: '💩',
+    key: 'stool',
+    label: '便便',
+    options: [
+      ['normal', '正常'],
+      ['soft', '偏软'],
+      ['diarrhea', '拉稀'],
+      ['constipation', '便秘'],
+      ['bloody', '带血'],
+    ],
+  },
+  {
+    icon: '😊',
+    key: 'mood',
+    label: '精神',
+    options: [
+      ['happy', '开心'],
+      ['normal', '正常'],
+      ['tired', '蔫蔫'],
+      ['uncomfortable', '不舒服'],
+    ],
+  },
+  {
+    icon: '⚡',
+    key: 'activity',
+    label: '活动',
+    options: [
+      ['normal', '正常'],
+      ['low', '偏少'],
+      ['high', '特别活跃'],
+    ],
+  },
+  {
+    icon: '🎾',
+    key: 'interaction',
+    label: '互动',
+    options: [
+      ['played', '玩耍'],
+      ['walked', '散步'],
+      ['groomed', '梳毛'],
+      ['photo', '拍照'],
+      ['none', '无'],
+    ],
+  },
+];
+
 export function getDailyCareLabel(key, value) {
   return dailyCareLabels[key]?.[value] || '未记录';
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getPetTodoTemplate } from '../data/petTodoOptions.js';
 import { supabase } from '../lib/supabase.js';
-import { addDays, getLocalDateString, getMonthEnd } from '../utils/todoDates.js';
+import { addDays, getLocalDateString } from '../utils/todoDates.js';
 import { useAuth } from './useAuth.js';
 
 function getFriendlyError(error) {
@@ -78,7 +78,7 @@ export function usePetTodos(petId) {
         .eq('user_id', user.id)
         .eq('pet_id', petId)
         .eq('is_done', false)
-        .lte('due_date', getMonthEnd())
+        .lte('due_date', addDays(getLocalDateString(), 30))
         .order('due_date', { ascending: true })
         .order('created_at', { ascending: true });
 

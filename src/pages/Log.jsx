@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import DeepSeekKeyPanel from '../components/DeepSeekKeyPanel.jsx';
 import {
   HealthMetricSection,
@@ -15,9 +15,11 @@ const inputClass =
   'w-full rounded-control border border-paw-border bg-paw-background px-4 py-3 text-sm text-paw-primary outline-none transition focus:border-paw-healthy';
 
 function Log() {
+  const [searchParams] = useSearchParams();
+  const initialDate = searchParams.get('date') || emptyHealthLogForm.log_date;
   const { activePetId, loading, pet, pets, selectPet } = usePets();
   const { error, saveHealthLog, saving } = useHealthLogs();
-  const [form, setForm] = useState(emptyHealthLogForm);
+  const [form, setForm] = useState({ ...emptyHealthLogForm, log_date: initialDate });
   const [feedback, setFeedback] = useState('');
   const [formError, setFormError] = useState('');
 

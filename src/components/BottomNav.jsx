@@ -2,17 +2,16 @@ import { NavLink } from 'react-router-dom';
 
 const navItems = [
   { to: '/', label: '首页', icon: '⌂' },
-  { to: '/log', label: '记录', icon: '+' },
-  { to: '/ai', label: 'AI', icon: '✦' },
-  { to: '/calendar', label: '日历', icon: '◷' },
-  { to: '/cloud', label: '云遛宠', icon: '☁' },
-  { to: '/profile', label: '档案', icon: '◉' },
+  { to: '/records', label: '记录', icon: '◷' },
+  { to: '/community', label: '社区', icon: '☁' },
+  { to: '/ai', label: 'AI管家', icon: '✦' },
+  { to: '/profile', label: '我的', icon: '◉' },
 ];
 
 function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 border-t border-paw-border bg-paw-card">
-      <div className="mx-auto grid max-w-app grid-cols-6 px-1 py-2">
+      <div className="mx-auto grid max-w-app grid-cols-5 px-1 py-2">
         {navItems.map((item) => (
           <NavLink
             key={item.to}

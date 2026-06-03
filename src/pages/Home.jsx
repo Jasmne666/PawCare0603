@@ -54,7 +54,7 @@ function Home() {
     feedback: dailyCareFeedback,
     loading: dailyCareLoading,
     record: dailyCareRecord,
-    saveQuickRecord,
+    saveCareRecord,
     saving: dailyCareSaving,
   } = useDailyCareRecords(pet?.id);
   const {
@@ -80,9 +80,9 @@ function Home() {
     navigate('/ai', { state: { initialQuestion: alert.question } });
   };
 
-  const handleQuickCareSave = async (actionValue) => {
+  const handleCareSave = async (patch, feedbackMessage) => {
     try {
-      await saveQuickRecord(actionValue);
+      await saveCareRecord(patch, feedbackMessage);
     } catch {
       // 错误已在今日照护卡片中展示。
     }
@@ -108,7 +108,7 @@ function Home() {
         error={dailyCareError}
         feedback={dailyCareFeedback}
         loading={dailyCareLoading}
-        onQuickSave={handleQuickCareSave}
+        onSaveRecord={handleCareSave}
         pet={pet}
         record={dailyCareRecord}
         saving={dailyCareSaving}

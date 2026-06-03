@@ -6,11 +6,11 @@ import {
 } from '../data/petTodoOptions.js';
 import { addDays, getLocalDateString } from '../utils/todoDates.js';
 
-function getInitialForm(type = 'external_deworming') {
+function getInitialForm(type = 'external_deworming', dueDate) {
   const template = getPetTodoTemplate(type);
   const today = getLocalDateString();
   return {
-    due_date: template.repeatDays ? addDays(today, template.repeatDays) : today,
+    due_date: dueDate || (template.repeatDays ? addDays(today, template.repeatDays) : today),
     note: '',
     repeat_days: template.repeatDays ?? '',
     title: template.title,
@@ -18,17 +18,17 @@ function getInitialForm(type = 'external_deworming') {
   };
 }
 
-function PetTodoComposer({ onClose, onSubmit, open, saving }) {
+function PetTodoComposer({ initialDueDate, onClose, onSubmit, open, saving }) {
   const [form, setForm] = useState(() => getInitialForm());
   const [localError, setLocalError] = useState('');
   const selectedTemplate = useMemo(() => getPetTodoTemplate(form.type), [form.type]);
 
   useEffect(() => {
     if (open) {
-      setForm(getInitialForm());
+      setForm(getInitialForm('external_deworming', initialDueDate));
       setLocalError('');
     }
-  }, [open]);
+  }, [initialDueDate, open]);
 
   if (!open) return null;
 
@@ -37,7 +37,7 @@ function PetTodoComposer({ onClose, onSubmit, open, saving }) {
   };
 
   const handleTypeChange = (type) => {
-    setForm(getInitialForm(type));
+    setForm(getInitialForm(type, form.due_date || initialDueDate));
   };
 
   const handleSubmit = async () => {

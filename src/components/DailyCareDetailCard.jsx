@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { dailyCareSummaryFields, getDailyCareLabel } from '../data/dailyCareOptions.js';
+import { getPetTodoIcon } from '../data/petTodoOptions.js';
 import { getCareFace, getCareStatusLevel } from '../utils/careCalendar.js';
+import { formatDueText } from '../utils/todoDates.js';
 
 function formatSelectedDate(dateKey) {
   const date = new Date(`${dateKey}T00:00:00`);
@@ -14,7 +16,36 @@ function getStatusText(level) {
   return '还没有记录';
 }
 
-function DailyCareDetailCard({ dateKey, pet, record }) {
+function DailyTodoList({ todos }) {
+  if (!todos.length) {
+    return (
+      <p className="rounded-control bg-paw-background px-4 py-3 text-sm leading-6 text-paw-muted">
+        这一天没有待办事项。
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {todos.map((todo) => (
+        <article className="rounded-control border border-paw-border bg-paw-background px-3 py-3" key={todo.id}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="min-w-0 truncate text-sm font-semibold text-paw-secondary">
+              <span className="mr-1">{getPetTodoIcon(todo.type)}</span>
+              {todo.title}
+            </p>
+            <span className="shrink-0 rounded-full bg-paw-healthy/10 px-2 py-1 text-[10px] font-semibold text-paw-healthy">
+              {formatDueText(todo.due_date)}
+            </span>
+          </div>
+          {todo.note && <p className="mt-1 text-xs leading-5 text-paw-muted">{todo.note}</p>}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function DailyCareDetailCard({ dateKey, onAddTodo, pet, record, todos = [] }) {
   const level = getCareStatusLevel(record);
 
   return (
@@ -26,12 +57,21 @@ function DailyCareDetailCard({ dateKey, pet, record }) {
             {getCareFace(record, pet)} {getStatusText(level)}
           </h2>
         </div>
-        <Link
-          className="shrink-0 rounded-control bg-paw-primary px-3 py-2 text-xs font-semibold text-paw-background"
-          to="/log"
-        >
-          编辑当天记录
-        </Link>
+        <div className="flex shrink-0 flex-col gap-2">
+          <Link
+            className="rounded-control bg-paw-primary px-3 py-2 text-center text-xs font-semibold text-paw-background"
+            to={`/log?date=${dateKey}`}
+          >
+            {record ? '编辑记录' : '添加记录'}
+          </Link>
+          <button
+            className="rounded-control border border-paw-border bg-paw-background px-3 py-2 text-xs font-semibold text-paw-secondary"
+            onClick={onAddTodo}
+            type="button"
+          >
+            添加待办
+          </button>
+        </div>
       </div>
 
       {record ? (
@@ -60,6 +100,14 @@ function DailyCareDetailCard({ dateKey, pet, record }) {
           这一天还没有照护记录。可以从首页的“今日照护”卡片快速补一条当天状态。
         </p>
       )}
+
+      <div className="mt-4">
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-paw-primary">当天待办</h3>
+          <span className="text-xs text-paw-muted">{todos.length} 项</span>
+        </div>
+        <DailyTodoList todos={todos} />
+      </div>
     </section>
   );
 }

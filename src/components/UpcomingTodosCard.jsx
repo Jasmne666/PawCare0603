@@ -6,26 +6,8 @@ import {
 import {
   formatDueText,
   getDaysUntil,
-  isWithinThisMonth,
 } from '../utils/todoDates.js';
 import PetTodoComposer from './PetTodoComposer.jsx';
-
-const filters = [
-  { label: '今天', value: 'today' },
-  { label: '近 7 天', value: 'week' },
-  { label: '本月', value: 'month' },
-];
-
-function getFilteredTodos(todos, filter) {
-  if (filter === 'today') return todos.filter((todo) => getDaysUntil(todo.due_date) <= 0);
-  if (filter === 'week') {
-    return todos.filter((todo) => {
-      const days = getDaysUntil(todo.due_date);
-      return days > 0 && days <= 7;
-    });
-  }
-  return todos.filter((todo) => isWithinThisMonth(todo.due_date));
-}
 
 function formatLastDone(value) {
   if (!value) return '还没有完成过';
@@ -77,6 +59,22 @@ function TodoItem({ onComplete, pet, saving, todo }) {
   );
 }
 
+function ReminderItem({ pet, todo }) {
+  const days = getDaysUntil(todo.due_date);
+
+  return (
+    <article className="rounded-control border border-paw-border bg-paw-background px-3 py-3">
+      <p className="truncate text-sm font-semibold text-paw-secondary">
+        <span className="mr-1">{getPetTodoIcon(todo.type)}</span>
+        距离下次{todo.title}还有 {days} 天
+      </p>
+      <p className="mt-1 text-[11px] text-paw-muted">
+        {pet.name} · {todo.due_date.slice(5).replace('-', '月')}日
+      </p>
+    </article>
+  );
+}
+
 function UpcomingTodosCard({
   error,
   loading,
@@ -86,10 +84,13 @@ function UpcomingTodosCard({
   saving,
   todos,
 }) {
-  const [filter, setFilter] = useState('today');
   const [composerOpen, setComposerOpen] = useState(false);
   const [localError, setLocalError] = useState('');
-  const filteredTodos = useMemo(() => getFilteredTodos(todos, filter), [filter, todos]);
+  const todayTodos = useMemo(() => todos.filter((todo) => getDaysUntil(todo.due_date) <= 0), [todos]);
+  const futureTodos = useMemo(
+    () => todos.filter((todo) => getDaysUntil(todo.due_date) > 0).slice(0, 3),
+    [todos],
+  );
 
   const handleComplete = async (todo) => {
     setLocalError('');
@@ -105,7 +106,7 @@ function UpcomingTodosCard({
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-paw-muted">近期待办</p>
-          <h2 className="font-title text-xl font-semibold">照护清单</h2>
+          <h2 className="font-title text-xl font-semibold">今日要做</h2>
         </div>
         <button
           className="rounded-control bg-paw-primary px-3 py-2 text-xs font-semibold text-paw-background"
@@ -114,21 +115,6 @@ function UpcomingTodosCard({
         >
           + 添加
         </button>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 rounded-card border border-paw-border bg-paw-background p-1">
-        {filters.map((item) => (
-          <button
-            className={`rounded-control px-2 py-2 text-xs font-semibold ${
-              filter === item.value ? 'bg-paw-primary text-paw-background' : 'text-paw-muted'
-            }`}
-            key={item.value}
-            onClick={() => setFilter(item.value)}
-            type="button"
-          >
-            {item.label}
-          </button>
-        ))}
       </div>
 
       {(error || localError) && (
@@ -140,15 +126,9 @@ function UpcomingTodosCard({
       <div className="mt-4 space-y-2">
         {loading ? (
           <p className="rounded-control bg-paw-background px-4 py-3 text-sm text-paw-muted">正在读取待办...</p>
-        ) : filteredTodos.length ? (
-          filteredTodos.map((todo) => (
-            <TodoItem
-              key={todo.id}
-              onComplete={handleComplete}
-              pet={pet}
-              saving={saving}
-              todo={todo}
-            />
+        ) : todayTodos.length ? (
+          todayTodos.map((todo) => (
+            <TodoItem key={todo.id} onComplete={handleComplete} pet={pet} saving={saving} todo={todo} />
           ))
         ) : (
           <p className="rounded-control bg-paw-background px-4 py-4 text-sm leading-6 text-paw-muted">
@@ -156,6 +136,20 @@ function UpcomingTodosCard({
           </p>
         )}
       </div>
+
+      {futureTodos.length > 0 && (
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-paw-primary">下次提醒</h3>
+            <span className="text-xs text-paw-muted">未来 30 天</span>
+          </div>
+          <div className="space-y-2">
+            {futureTodos.map((todo) => (
+              <ReminderItem key={todo.id} pet={pet} todo={todo} />
+            ))}
+          </div>
+        </div>
+      )}
 
       <PetTodoComposer
         onClose={() => setComposerOpen(false)}

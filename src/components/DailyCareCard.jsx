@@ -1,8 +1,28 @@
-import {
-  dailyCareQuickActions,
-  dailyCareSummaryFields,
-  getDailyCareLabel,
-} from '../data/dailyCareOptions.js';
+import { useEffect, useState } from 'react';
+import { dailyCareDetailGroups, dailyCareSummaryFields, getDailyCareLabel } from '../data/dailyCareOptions.js';
+
+const defaultForm = {
+  abnormal_notes: '',
+  activity: 'normal',
+  appetite: 'normal',
+  interaction: 'none',
+  mood: 'normal',
+  stool: 'normal',
+  water: 'normal',
+};
+
+function toCareForm(record) {
+  if (!record) return defaultForm;
+  return {
+    abnormal_notes: record.abnormal_notes || '',
+    activity: record.activity || 'normal',
+    appetite: record.appetite || 'normal',
+    interaction: record.interaction || 'none',
+    mood: record.mood || 'normal',
+    stool: record.stool || 'normal',
+    water: record.water || 'normal',
+  };
+}
 
 function PetAvatar({ pet }) {
   return (
@@ -45,11 +65,41 @@ function DailyCareCard({
   error,
   feedback,
   loading,
-  onQuickSave,
+  onSaveRecord,
   pet,
   record,
   saving,
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const [form, setForm] = useState(defaultForm);
+
+  useEffect(() => {
+    setForm(toCareForm(record));
+  }, [record]);
+
+  const setField = (key, value) => {
+    setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const saveNormal = () => {
+    onSaveRecord(
+      {
+        abnormal_notes: null,
+        activity: 'normal',
+        appetite: 'normal',
+        interaction: 'none',
+        mood: 'happy',
+        stool: 'normal',
+        water: 'normal',
+      },
+      `${pet.name}的小报告已记录，今天也是被好好照顾的一天 🐾`,
+    );
+  };
+
+  const saveDetailed = () => {
+    onSaveRecord(form, `${pet.name}的小报告已保存，照护记录又完整了一点 ✨`);
+  };
+
   return (
     <section className="rounded-card border border-paw-border bg-paw-card p-5">
       <div className="flex items-start justify-between gap-3">
@@ -79,20 +129,68 @@ function DailyCareCard({
         </p>
       )}
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        {dailyCareQuickActions.map((action) => (
+      <div className="mt-4 space-y-2">
+        <button
+          className="w-full rounded-card bg-paw-primary px-4 py-4 text-sm font-semibold text-paw-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={loading || saving}
+          onClick={saveNormal}
+          type="button"
+        >
+          一键记录：今天正常
+        </button>
+        <button
+          className="w-full rounded-control border border-paw-border bg-paw-background px-4 py-3 text-sm font-semibold text-paw-secondary"
+          onClick={() => setExpanded((current) => !current)}
+          type="button"
+        >
+          {expanded ? '收起详细记录' : '展开详细记录'}
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="mt-4 space-y-4">
+          {dailyCareDetailGroups.map((group) => (
+            <div key={group.key}>
+              <p className="mb-2 text-sm font-semibold text-paw-secondary">
+                {group.icon} {group.label}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {group.options.map(([value, label]) => (
+                  <button
+                    className={`rounded-full border px-3 py-2 text-xs font-semibold ${
+                      form[group.key] === value
+                        ? 'border-paw-healthy bg-paw-healthy/10 text-paw-healthy'
+                        : 'border-paw-border bg-paw-background text-paw-muted'
+                    }`}
+                    key={value}
+                    onClick={() => setField(group.key, value)}
+                    type="button"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <label className="block text-sm font-semibold text-paw-secondary">
+            异常备注
+            <textarea
+              className="mt-2 min-h-20 w-full resize-none rounded-control border border-paw-border bg-paw-background px-4 py-3 text-sm leading-6 outline-none focus:border-paw-healthy"
+              onChange={(event) => setField('abnormal_notes', event.target.value)}
+              placeholder={`记录${pet.name}今天比较特别的情况`}
+              value={form.abnormal_notes}
+            />
+          </label>
           <button
-            className="rounded-control border border-paw-border bg-paw-background px-3 py-3 text-left text-sm font-semibold text-paw-secondary transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-card bg-paw-primary px-4 py-4 text-sm font-semibold text-paw-background disabled:opacity-50"
             disabled={loading || saving}
-            key={action.value}
-            onClick={() => onQuickSave(action.value)}
+            onClick={saveDetailed}
             type="button"
           >
-            <span className="mr-2 text-base">{action.icon}</span>
-            {action.label}
+            {saving ? '正在保存...' : '保存今日小报告'}
           </button>
-        ))}
-      </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -5,6 +5,8 @@ import {
   getCareStatusLevel,
   getLocalDateString,
 } from '../utils/careCalendar.js';
+import { getPetTodoIcon } from '../data/petTodoOptions.js';
+import { getDaysUntil } from '../utils/todoDates.js';
 
 const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
 
@@ -25,7 +27,22 @@ function getDayClass({ dateKey, inMonth, record, selectedDate }) {
   ].join(' ');
 }
 
-function HealthCalendarGrid({ monthDate, onSelectDate, pet, recordsByDate, selectedDate }) {
+function getTodoHint(todo) {
+  if (!todo) return '';
+  const days = getDaysUntil(todo.due_date);
+  if (days < 0 || days > 30) return '';
+  if (days === 0) return `${getPetTodoIcon(todo.type)} 今天`;
+  return `${getPetTodoIcon(todo.type)} ${days}天后`;
+}
+
+function HealthCalendarGrid({
+  monthDate,
+  onSelectDate,
+  pet,
+  recordsByDate,
+  selectedDate,
+  todosByDate = {},
+}) {
   const today = getLocalDateString();
   const days = getCalendarDays(monthDate);
 
@@ -68,6 +85,11 @@ function HealthCalendarGrid({ monthDate, onSelectDate, pet, recordsByDate, selec
                   <span key={`${day.dateKey}-${icon}`}>{icon}</span>
                 ))}
               </div>
+              {getTodoHint(todosByDate[day.dateKey]?.[0]) && (
+                <p className="mt-1 truncate text-center text-[9px] font-medium text-paw-muted/70">
+                  {getTodoHint(todosByDate[day.dateKey][0])}
+                </p>
+              )}
             </button>
           );
         })}

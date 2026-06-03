@@ -10,9 +10,11 @@ import Home from './pages/Home.jsx';
 import Log from './pages/Log.jsx';
 import Login from './pages/Login.jsx';
 import Profile from './pages/Profile.jsx';
+import Records from './pages/Records.jsx';
 
 const protectedRoutes = [
   { path: '/', element: <Home /> },
+  { path: '/records', element: <Records /> },
   { path: '/log', element: <Log /> },
   { path: '/ai', element: <AI /> },
   { path: '/calendar', element: <Calendar /> },

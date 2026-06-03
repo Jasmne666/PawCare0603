@@ -36,7 +36,7 @@ function getFriendlyError(error) {
   return message || '保存今日照护记录失败';
 }
 
-function buildPayload({ action, petId, record, recordDate, userId }) {
+function buildPayload({ patch, petId, record, recordDate, userId }) {
   const currentRecord = record
     ? {
         abnormal_notes: record.abnormal_notes,
@@ -52,8 +52,8 @@ function buildPayload({ action, petId, record, recordDate, userId }) {
   return {
     ...defaultCareRecord,
     ...currentRecord,
-    ...action.patch,
     abnormal_notes: record?.abnormal_notes || null,
+    ...patch,
     pet_id: petId,
     record_date: recordDate,
     user_id: userId,
@@ -153,21 +153,17 @@ export function useDailyCareRecords(petId) {
     loadTodayRecord();
   }, [loadTodayRecord]);
 
-  const saveQuickRecord = useCallback(
-    async (actionValue) => {
+  const saveCareRecord = useCallback(
+    async (patch, feedbackMessage = '今日小报告已保存 🐾') => {
       if (!user) throw new Error('请先登录');
       if (!petId) throw new Error('请先选择宠物');
-
-      const action = dailyCareQuickActions.find((item) => item.value === actionValue);
-      if (!action) throw new Error('未知照护状态');
-
       setSaving(true);
       setError('');
       setFeedback('');
 
       try {
         const payload = buildPayload({
-          action,
+          patch,
           petId,
           record,
           recordDate: today,
@@ -181,7 +177,7 @@ export function useDailyCareRecords(petId) {
 
         if (saveError) throw saveError;
         setRecord(data);
-        setFeedback(action.feedback);
+        setFeedback(feedbackMessage);
         return data;
       } catch (err) {
         const message = getFriendlyError(err);
@@ -194,6 +190,19 @@ export function useDailyCareRecords(petId) {
     [petId, record, today, user],
   );
 
+  const saveQuickRecord = useCallback(
+    async (actionValue) => {
+      if (!user) throw new Error('请先登录');
+      if (!petId) throw new Error('请先选择宠物');
+
+      const action = dailyCareQuickActions.find((item) => item.value === actionValue);
+      if (!action) throw new Error('未知照护状态');
+
+      return saveCareRecord(action.patch, action.feedback);
+    },
+    [petId, saveCareRecord, user],
+  );
+
   return useMemo(
     () => ({
       error,
@@ -201,10 +210,11 @@ export function useDailyCareRecords(petId) {
       loadTodayRecord,
       loading,
       record,
+      saveCareRecord,
       saveQuickRecord,
       saving,
       today,
     }),
-    [error, feedback, loadTodayRecord, loading, record, saveQuickRecord, saving, today],
+    [error, feedback, loadTodayRecord, loading, record, saveCareRecord, saveQuickRecord, saving, today],
   );
 }
