@@ -22,11 +22,11 @@ function PetListCard({ onEdit, pet }) {
           </p>
         </div>
         <button
-          className="shrink-0 rounded-control border border-paw-border bg-paw-background px-3 py-2 text-xs font-semibold text-paw-secondary"
+          className="shrink-0 border-0 bg-transparent text-xs font-semibold text-paw-primary"
           onClick={() => onEdit(pet)}
           type="button"
         >
-          编辑档案
+          编辑档案 →
         </button>
       </div>
     </article>
