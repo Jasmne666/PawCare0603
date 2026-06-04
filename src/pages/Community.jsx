@@ -93,9 +93,11 @@ function Community() {
       </div>
 
       <CommunityFeed
-        emptyText={feed === 'following' ? '还没有关注的宠物动态。' : '社区还没有动态，发布第一条吧。'}
+        canCreatePost={!petLoading && Boolean(pet)}
+        emptyText={feed === 'following' ? '还没有关注的宠物动态，来发一条自己的日常吧。' : '还没有动态，来发第一条吧'}
         loading={loading}
         onCommentAdded={bumpCommentCount}
+        onCreatePost={() => setComposerOpen(true)}
         onFollowPet={toggleFollowPet}
         onLike={toggleLike}
         posts={posts}
@@ -112,9 +114,10 @@ function Community() {
 
       <button
         aria-label="发布动态"
-        className="fixed bottom-24 left-1/2 z-40 flex h-14 w-14 translate-x-[150px] items-center justify-center rounded-full bg-paw-primary text-3xl leading-none text-paw-background shadow-xl disabled:opacity-50 max-[430px]:translate-x-[125px]"
+        className="fixed bottom-[96px] right-5 z-40 flex items-center justify-center rounded-full bg-paw-primary text-3xl leading-none text-paw-background shadow-[0_4px_16px_rgba(44,24,16,0.3)] disabled:opacity-50"
         disabled={petLoading || !pet}
         onClick={() => setComposerOpen(true)}
+        style={{ height: 52, width: 52 }}
         type="button"
       >
         +

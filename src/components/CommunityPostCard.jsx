@@ -17,6 +17,15 @@ function CommunityPostCard({ onCommentAdded, onFollowPet, onLike, post, userId }
   const pet = post.pets;
   const ownPet = pet?.user_id === userId;
   const [showComments, setShowComments] = useState(false);
+  const [likeBouncing, setLikeBouncing] = useState(false);
+
+  const handleLike = () => {
+    if (!post.liked) {
+      setLikeBouncing(true);
+      window.setTimeout(() => setLikeBouncing(false), 320);
+    }
+    onLike(post);
+  };
 
   return (
     <article className="rounded-card border border-paw-border bg-paw-card p-5">
@@ -62,16 +71,16 @@ function CommunityPostCard({ onCommentAdded, onFollowPet, onLike, post, userId }
             onClick={() => setShowComments((current) => !current)}
             type="button"
           >
-            评论 {post.comments_count || 0}
+            {(post.comments_count || 0) > 0 ? `评论 ${post.comments_count}` : '来说说 💬'}
           </button>
           <button
             className={`rounded-full px-3 py-1 font-semibold ${
               post.liked ? 'bg-paw-danger/10 text-paw-danger' : 'bg-paw-background text-paw-muted'
-            }`}
-            onClick={() => onLike(post)}
+            } ${likeBouncing ? 'animate-like-bounce' : ''}`}
+            onClick={handleLike}
             type="button"
           >
-            ♥ {post.likes_count || 0}
+            <span aria-hidden="true">{post.liked ? '❤️' : '♥'}</span> {post.likes_count || 0}
           </button>
         </div>
       </div>
