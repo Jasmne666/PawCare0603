@@ -134,6 +134,7 @@ function UpcomingTodosCard({
         onClose={() => setComposerOpen(false)}
         onSubmit={onCreateTodo}
         open={composerOpen}
+        pet={pet}
         saving={saving}
       />
     </section>

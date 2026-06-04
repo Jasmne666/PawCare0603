@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   getPetTodoCategoryLabel,
+  getPetTodoSpeciesHint,
   getPetTodoTemplate,
+  getPetTodoTemplatesForSpecies,
   petTodoTemplates,
 } from '../data/petTodoOptions.js';
 import { addDays, getLocalDateString } from '../utils/todoDates.js';
@@ -18,10 +20,11 @@ function getInitialForm(type = 'external_deworming', dueDate) {
   };
 }
 
-function PetTodoComposer({ initialDueDate, onClose, onSubmit, open, saving }) {
+function PetTodoComposer({ initialDueDate, onClose, onSubmit, open, pet, saving }) {
   const [form, setForm] = useState(() => getInitialForm());
   const [localError, setLocalError] = useState('');
   const selectedTemplate = useMemo(() => getPetTodoTemplate(form.type), [form.type]);
+  const templates = useMemo(() => getPetTodoTemplatesForSpecies(pet?.species), [pet?.species]);
 
   useEffect(() => {
     if (open) {
@@ -37,7 +40,7 @@ function PetTodoComposer({ initialDueDate, onClose, onSubmit, open, saving }) {
   };
 
   const handleTypeChange = (type) => {
-    setForm(getInitialForm(type, form.due_date || initialDueDate));
+    setForm(getInitialForm(type, initialDueDate));
   };
 
   const handleSubmit = async () => {
@@ -57,6 +60,9 @@ function PetTodoComposer({ initialDueDate, onClose, onSubmit, open, saving }) {
           <div>
             <p className="text-sm font-medium text-paw-muted">近期待办</p>
             <h2 className="font-title text-2xl font-semibold">添加照护事项</h2>
+            <p className="mt-1 text-xs leading-5 text-paw-muted">
+              {pet?.name ? `${pet.name} · ${getPetTodoSpeciesHint(pet.species)}` : '设置完成后会按周期自动生成下次提醒。'}
+            </p>
           </div>
           <button className="text-sm font-semibold text-paw-muted" onClick={onClose} type="button">
             关闭
@@ -64,7 +70,7 @@ function PetTodoComposer({ initialDueDate, onClose, onSubmit, open, saving }) {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          {petTodoTemplates.map((template) => (
+          {(templates.length ? templates : petTodoTemplates).map((template) => (
             <button
               className={`rounded-control border px-3 py-3 text-left text-sm font-semibold ${
                 form.type === template.type

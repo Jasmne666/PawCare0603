@@ -31,6 +31,12 @@ create table if not exists public.pet_todos (
       'ear_cleaning',
       'teeth',
       'weight',
+      'habitat_cleaning',
+      'walk',
+      'sand_bath',
+      'feather_check',
+      'shed_check',
+      'water_change',
       'medicine',
       'revisit',
       'custom'

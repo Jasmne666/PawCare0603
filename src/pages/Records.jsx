@@ -173,6 +173,7 @@ function Records() {
         onClose={() => setTodoComposerOpen(false)}
         onSubmit={createTodo}
         open={todoComposerOpen}
+        pet={pet}
         saving={todoSaving}
       />
     </div>
