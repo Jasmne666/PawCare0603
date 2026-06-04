@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import DailyCareDetailCard from '../components/DailyCareDetailCard.jsx';
+import CycleInsightCard from '../components/CycleInsightCard.jsx';
 import HealthCalendarGrid from '../components/HealthCalendarGrid.jsx';
 import PetSwitcher from '../components/PetSwitcher.jsx';
 import PetTodoComposer from '../components/PetTodoComposer.jsx';
@@ -10,6 +10,7 @@ import { useDailyCareRecords, useMonthlyDailyCareRecords } from '../hooks/useDai
 import { usePetTodos } from '../hooks/usePetTodos.js';
 import { usePets } from '../hooks/usePets.js';
 import { formatMonthTitle, getLocalDateString, moveMonth } from '../utils/careCalendar.js';
+import { getCycleMarkers } from '../utils/cyclePredictions.js';
 
 function LoadingCard({ title }) {
   return (
@@ -59,9 +60,11 @@ function Records() {
   } = useDailyCareRecords(pet?.id);
   const { createTodo, error: todoError, loading: todoLoading, saving: todoSaving, todos } = usePetTodos(pet?.id);
   const recordsByDate = useMemo(() => groupByDate(records, 'record_date'), [records]);
+  const cycleInfo = useMemo(() => getCycleMarkers({ monthDate, pet: pet || {}, records }), [monthDate, pet, records]);
   const todosByDate = useMemo(() => groupByDate(todos, 'due_date'), [todos]);
   const selectedRecord = recordsByDate[selectedDate]?.[0] || null;
   const selectedTodos = todosByDate[selectedDate] || [];
+  const isFutureDate = selectedDate > getLocalDateString();
   const error = petError || careError || todoError;
 
   const changeMonth = (offset) => {
@@ -121,6 +124,7 @@ function Records() {
       ) : (
         <HealthCalendarGrid
           monthDate={monthDate}
+          cycleMarkers={cycleInfo.markers}
           onSelectDate={setSelectedDate}
           pet={pet}
           recordsByDate={Object.fromEntries(
@@ -131,16 +135,32 @@ function Records() {
         />
       )}
 
-      <RecordEntryRows onOpenSection={setActiveSection} pet={pet} record={selectedRecord} />
-
-      <DailyCareDetailCard
-        dateKey={selectedDate}
-        onAddTodo={() => setTodoComposerOpen(true)}
-        onEditRecord={() => setActiveSection('food')}
+      <RecordEntryRows
+        disabled={isFutureDate}
+        disabledText="未来日期只能查看预测和待办，不能提前填写记录。"
+        onOpenSection={setActiveSection}
         pet={pet}
         record={selectedRecord}
-        todos={selectedTodos}
       />
+      <CycleInsightCard notes={cycleInfo.notes} />
+
+      {selectedTodos.length > 0 && (
+        <section className="rounded-card border border-paw-border bg-paw-card p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-paw-primary">当天待办</h2>
+            <button className="text-xs font-semibold text-paw-healthy" onClick={() => setTodoComposerOpen(true)} type="button">
+              添加待办
+            </button>
+          </div>
+          <div className="space-y-2">
+            {selectedTodos.map((todo) => (
+              <p className="rounded-control bg-paw-background px-3 py-2 text-xs text-paw-muted" key={todo.id}>
+                {todo.title}
+              </p>
+            ))}
+          </div>
+        </section>
+      )}
 
       {todayCareError && (
         <section className="rounded-card border border-paw-danger bg-paw-danger/10 p-4 text-sm text-paw-danger">

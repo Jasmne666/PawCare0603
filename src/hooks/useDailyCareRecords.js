@@ -23,8 +23,8 @@ function getMonthRange(monthDate = new Date()) {
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
   return {
-    end: getLocalDateString(new Date(year, month + 1, 0)),
-    start: getLocalDateString(new Date(year, month, 1)),
+    end: getLocalDateString(new Date(year, month + 2, 0)),
+    start: getLocalDateString(new Date(year, month - 1, 1)),
   };
 }
 
@@ -78,6 +78,21 @@ function buildPayload({ patch, petId, record, recordDate, userId }) {
     pet_id: petId,
     record_date: recordDate,
     user_id: userId,
+  };
+}
+
+function stripExtraPayload(payload) {
+  return {
+    abnormal_notes: payload.abnormal_notes,
+    activity: payload.activity,
+    appetite: payload.appetite,
+    interaction: payload.interaction,
+    mood: payload.mood,
+    pet_id: payload.pet_id,
+    record_date: payload.record_date,
+    stool: payload.stool,
+    user_id: payload.user_id,
+    water: payload.water,
   };
 }
 
@@ -195,6 +210,18 @@ export function useDailyCareRecords(petId) {
           .upsert(payload, { onConflict: 'pet_id,record_date' })
           .select('*')
           .single();
+
+        if (saveError && getFriendlyError(saveError).includes('记录扩展字段还没创建')) {
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('daily_care_records')
+            .upsert(stripExtraPayload(payload), { onConflict: 'pet_id,record_date' })
+            .select('*')
+            .single();
+          if (fallbackError) throw fallbackError;
+          if (recordDate === today) setRecord(fallbackData);
+          setFeedback(`${feedbackMessage}。扩展字段需要运行 SQL 后才能保存。`);
+          return fallbackData;
+        }
 
         if (saveError) throw saveError;
         if (recordDate === today) setRecord(data);

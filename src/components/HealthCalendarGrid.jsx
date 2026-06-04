@@ -27,6 +27,13 @@ function getDayClass({ dateKey, inMonth, record, selectedDate }) {
   ].join(' ');
 }
 
+function getMarkerClass(marker) {
+  if (marker?.color === 'rose') return 'bg-paw-danger/20 border-paw-danger/50 text-paw-danger';
+  if (marker?.color === 'amber') return 'bg-paw-warning/20 border-paw-warning/60 text-paw-secondary';
+  if (marker?.color === 'violet') return 'bg-[#EFE7FF] border-[#A77BE8] text-[#6D3FB4]';
+  return '';
+}
+
 function getTodoHint(todo) {
   if (!todo) return '';
   const days = getDaysUntil(todo.due_date);
@@ -41,6 +48,7 @@ function HealthCalendarGrid({
   pet,
   recordsByDate,
   selectedDate,
+  cycleMarkers = {},
   todosByDate = {},
 }) {
   const today = getLocalDateString();
@@ -58,15 +66,17 @@ function HealthCalendarGrid({
         {days.map((day) => {
           const record = recordsByDate[day.dateKey];
           const icons = getCareRecordIcons(record);
+          const marker = cycleMarkers[day.dateKey];
+          const markerClass = getMarkerClass(marker);
 
           return (
             <button
-              className={getDayClass({
+              className={`${getDayClass({
                 dateKey: day.dateKey,
                 inMonth: day.inMonth,
                 record,
                 selectedDate,
-              })}
+              })} ${markerClass}`}
               key={day.dateKey}
               onClick={() => onSelectDate(day.dateKey)}
               type="button"
@@ -77,9 +87,10 @@ function HealthCalendarGrid({
                   <span className="h-1.5 w-1.5 rounded-full bg-paw-healthy" />
                 )}
               </div>
-              <div className={`mt-0.5 text-center text-sm ${record ? '' : 'text-paw-muted/45'}`}>
-                {getCareFace(record, pet)}
-              </div>
+              {record && <div className="mt-0.5 text-center text-sm">{getCareFace(record, pet)}</div>}
+              {marker && !record && (
+                <div className="mt-0.5 truncate text-center text-[9px] font-semibold">{marker.label}</div>
+              )}
               <div className="mt-0.5 flex flex-wrap justify-center gap-0.5 text-[9px] leading-none">
                 {icons.map((icon) => (
                   <span key={`${day.dateKey}-${icon}`}>{icon}</span>

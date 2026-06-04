@@ -12,6 +12,8 @@ export const recordEntrySections = [
   { icon: '➕', id: 'custom', label: '更多记录' },
 ];
 
+const normalCareTags = ['没有异常', '猫砂盆已清理', '抓挠/磨爪正常', '叫声正常', '羽毛顺滑', '站杆稳定', '已遛狗', '出门排尿', '牵引状态稳定', '跑轮活跃', '藏粮正常', '笼舍已清理', '啃咬正常', '温湿度已检查', '蜕皮状态正常', '加热灯正常'];
+
 export const sectionChoices = {
   activity: [
     ['normal', '正常'],
@@ -64,7 +66,7 @@ export function getRecordSectionSummary(sectionId, record, pet) {
     return `${amount}${serving}${brand}`;
   }
   if (sectionId === 'symptoms') {
-    const tags = record.species_care_tags || [];
+    const tags = (record.species_care_tags || []).filter((tag) => !normalCareTags.includes(tag));
     return tags.length ? tags.slice(0, 3).join('、') : `${pet.name}暂无特殊症状`;
   }
   if (sectionId === 'custom') {

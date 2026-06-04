@@ -1,13 +1,19 @@
 import { getRecordSectionSummary, recordEntrySections } from '../data/recordEntrySections.js';
 
-function RecordEntryRows({ onOpenSection, pet, record }) {
+function RecordEntryRows({ disabled, disabledText, onOpenSection, pet, record }) {
   return (
     <section className="overflow-hidden rounded-card border border-paw-border bg-paw-card">
+      {disabled && (
+        <p className="border-b border-paw-border bg-paw-warning/10 px-4 py-3 text-xs text-paw-secondary">
+          {disabledText}
+        </p>
+      )}
       {recordEntrySections.map((section, index) => (
         <button
           className={`flex w-full items-center gap-3 px-4 py-3 text-left active:scale-100 ${
             index > 0 ? 'border-t border-paw-border' : ''
-          }`}
+          } ${disabled ? 'opacity-45' : ''}`}
+          disabled={disabled}
           key={section.id}
           onClick={() => onOpenSection(section.id)}
           type="button"
