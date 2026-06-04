@@ -95,6 +95,46 @@ export async function createFallbackStickerImage(file) {
   return new File([blob], getSafeImageName(), { type: 'image/png' });
 }
 
-export async function createPetStickerFromImage(file) {
-  return createFallbackStickerImage(file);
+export async function createRewardStickerImage({ meta, pet }) {
+  const canvas = document.createElement('canvas');
+  const size = 960;
+  canvas.width = size;
+  canvas.height = size;
+
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#FDFAF4';
+  ctx.fillRect(0, 0, size, size);
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(44, 24, 16, 0.18)';
+  ctx.shadowBlur = 34;
+  ctx.shadowOffsetY = 20;
+  ctx.fillStyle = '#FFFFFF';
+  drawStickerBlob(ctx, size / 2, size / 2, 380);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.fillStyle = meta.accent;
+  drawStickerBlob(ctx, size / 2, size / 2, 330);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '700 150px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(pet.avatar || meta.emoji, size / 2, 350);
+
+  ctx.font = '700 62px sans-serif';
+  ctx.fillText(meta.series, size / 2, 520);
+
+  ctx.font = '500 42px sans-serif';
+  ctx.fillText(meta.title.slice(0, 12), size / 2, 590);
+
+  ctx.lineWidth = 38;
+  ctx.strokeStyle = '#FFFFFF';
+  drawStickerBlob(ctx, size / 2, size / 2, 355);
+  ctx.stroke();
+
+  const blob = await canvasToBlob(canvas);
+  return new File([blob], getSafeImageName('pawcare-reward-sticker'), { type: 'image/png' });
 }

@@ -54,6 +54,7 @@ function HealthCalendarGrid({
   recordsByDate,
   selectedDate,
   cycleMarkers = {},
+  stickersByDate = {},
   todosByDate = {},
 }) {
   const today = getLocalDateString();
@@ -70,6 +71,7 @@ function HealthCalendarGrid({
       <div className="grid grid-cols-7 gap-1.5">
         {days.map((day) => {
           const record = recordsByDate[day.dateKey];
+          const sticker = stickersByDate[day.dateKey]?.[0];
           const marker = cycleMarkers[day.dateKey];
           const markerClass = getMarkerClass(marker);
           const dotClass = getStatusDot(record);
@@ -92,7 +94,15 @@ function HealthCalendarGrid({
                   <span className="h-1.5 w-1.5 rounded-full bg-paw-healthy" />
                 )}
               </div>
-              {dotClass && <div className={`mx-auto mt-2 h-2.5 w-2.5 rounded-full ${dotClass}`} />}
+              {sticker ? (
+                <img
+                  alt="当天贴纸"
+                  className="mx-auto mt-1 h-7 w-7 rounded-full border-2 border-white object-cover shadow-sm"
+                  src={sticker.sticker_image_url || sticker.original_image_url}
+                />
+              ) : (
+                dotClass && <div className={`mx-auto mt-2 h-2.5 w-2.5 rounded-full ${dotClass}`} />
+              )}
               {marker && !record && (
                 <div className="mt-0.5 truncate text-center text-[9px] font-semibold">{marker.label}</div>
               )}

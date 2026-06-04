@@ -7,6 +7,7 @@ import PetTodoComposer from '../components/PetTodoComposer.jsx';
 import RecordEntryModal from '../components/RecordEntryModal.jsx';
 import RecordEntryRows from '../components/RecordEntryRows.jsx';
 import { useDailyCareRecords, useMonthlyDailyCareRecords } from '../hooks/useDailyCareRecords.js';
+import { usePetStickers } from '../hooks/usePetStickers.js';
 import { usePetTodos } from '../hooks/usePetTodos.js';
 import { usePets } from '../hooks/usePets.js';
 import { formatMonthTitle, getLocalDateString, moveMonth } from '../utils/careCalendar.js';
@@ -49,6 +50,7 @@ function Records() {
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => getLocalDateString());
   const [activeSection, setActiveSection] = useState('');
+  const [unlockNotice, setUnlockNotice] = useState('');
   const [todoComposerOpen, setTodoComposerOpen] = useState(false);
   const { activePetId, error: petError, loading: petLoading, pet, pets, selectPet } = usePets();
   const { error: careError, loadMonthRecords, loading: careLoading, records } = useMonthlyDailyCareRecords(pet?.id, monthDate);
@@ -59,9 +61,11 @@ function Records() {
     saving: todayCareSaving,
   } = useDailyCareRecords(pet?.id);
   const { createTodo, error: todoError, loading: todoLoading, saving: todoSaving, todos } = usePetTodos(pet?.id);
+  const { recentStickers, saveRewardSticker } = usePetStickers(pet?.id);
   const recordsByDate = useMemo(() => groupByDate(records, 'record_date'), [records]);
   const cycleInfo = useMemo(() => getCycleMarkers({ monthDate, pet: pet || {}, records }), [monthDate, pet, records]);
   const todosByDate = useMemo(() => groupByDate(todos, 'due_date'), [todos]);
+  const stickersByDate = useMemo(() => groupByDate(recentStickers, 'captured_date'), [recentStickers]);
   const selectedRecord = recordsByDate[selectedDate]?.[0] || null;
   const selectedTodos = todosByDate[selectedDate] || [];
   const isFutureDate = selectedDate > getLocalDateString();
@@ -74,8 +78,17 @@ function Records() {
   };
 
   const saveSelectedCare = async (patch) => {
-    await saveCareRecordForDate(selectedDate, patch, selectedRecord);
+    setUnlockNotice('');
+    const savedRecord = await saveCareRecordForDate(selectedDate, patch, selectedRecord);
     await loadMonthRecords();
+    if (selectedDate <= getLocalDateString()) {
+      try {
+        const sticker = await saveRewardSticker({ date: selectedDate, pet, record: savedRecord });
+        if (sticker) setUnlockNotice(`已解锁 ${sticker.title || `${pet.name}的今日贴纸`}，可以去贴纸册查看。`);
+      } catch {
+        setUnlockNotice('记录已保存，贴纸解锁需要先确认 pet-stickers 存储桶可用。');
+      }
+    }
     setActiveSection('');
   };
 
@@ -131,8 +144,15 @@ function Records() {
             Object.entries(recordsByDate).map(([dateKey, value]) => [dateKey, value[0]]),
           )}
           selectedDate={selectedDate}
+          stickersByDate={stickersByDate}
           todosByDate={todosByDate}
         />
+      )}
+
+      {unlockNotice && (
+        <section className="rounded-card border border-paw-healthy/30 bg-paw-healthy/10 p-4 text-sm text-paw-healthy">
+          {unlockNotice}
+        </section>
       )}
 
       <RecordEntryRows

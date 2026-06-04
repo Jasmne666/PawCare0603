@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPetStickerFromImage } from '../lib/petStickerGeneration.js';
 import { supabase } from '../lib/supabase.js';
-import { createPetStickerFromImage, getLocalDateString } from '../utils/stickerImage.js';
+import { createRewardStickerImage, getLocalDateString } from '../utils/stickerImage.js';
+import { getRewardStickerMeta, isRewardStickerUnlocked } from '../utils/stickerRewards.js';
 import { useAuth } from './useAuth.js';
 
 const ORIGINAL_BUCKET = 'pet-sticker-originals';
@@ -155,6 +157,52 @@ export function usePetStickers(activePetId) {
     [activePetId, refresh, user],
   );
 
+  const saveRewardSticker = useCallback(
+    async ({ date = today, pet, record }) => {
+      if (!user) throw new Error('请先登录');
+      if (!pet?.id) throw new Error('请先选择宠物');
+      if (!isRewardStickerUnlocked(record)) return null;
+
+      const existing = await loadStickersByDate(pet.id, date);
+      if (existing.length) return existing[0];
+
+      setSaving(true);
+      setError('');
+
+      try {
+        const meta = getRewardStickerMeta(record, pet);
+        const stickerFile = await createRewardStickerImage({ meta, pet });
+        const basePath = `${user.id}/${pet.id}/${date}`;
+        const stickerPath = `${basePath}/${getSafeFileName(stickerFile.name, 'png')}`;
+        const stickerUrl = await uploadStickerFile({ bucket: STICKER_BUCKET, file: stickerFile, path: stickerPath });
+        const { data, error: insertError } = await supabase
+          .from('pet_stickers')
+          .insert({
+            captured_date: date,
+            note: meta.note,
+            original_image_url: stickerUrl,
+            pet_id: pet.id,
+            processing_status: 'fallback',
+            sticker_image_url: stickerUrl,
+            title: meta.title,
+            user_id: user.id,
+          })
+          .select('*')
+          .single();
+        if (insertError) throw insertError;
+        await refresh();
+        return data;
+      } catch (err) {
+        const message = getFriendlyError(err);
+        setError(message);
+        throw new Error(message);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [loadStickersByDate, refresh, today, user],
+  );
+
   const updateSticker = useCallback(
     async (stickerId, patch) => {
       if (!user) throw new Error('请先登录');
@@ -198,6 +246,7 @@ export function usePetStickers(activePetId) {
       recentStickers,
       refresh,
       saveSticker,
+      saveRewardSticker,
       saving,
       todayStickers,
       toggleFavorite: (sticker) => updateSticker(sticker.id, { is_favorite: !sticker.is_favorite }),
@@ -212,6 +261,7 @@ export function usePetStickers(activePetId) {
       recentStickers,
       refresh,
       saveSticker,
+      saveRewardSticker,
       saving,
       today,
       todayStickers,

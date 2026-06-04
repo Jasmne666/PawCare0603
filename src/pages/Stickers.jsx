@@ -4,6 +4,7 @@ import PetSwitcher from '../components/PetSwitcher.jsx';
 import StickerGallery from '../components/StickerGallery.jsx';
 import { usePetStickers } from '../hooks/usePetStickers.js';
 import { usePets } from '../hooks/usePets.js';
+import { downloadMonthlyMemoryBook } from '../utils/monthlyMemoryBook.js';
 
 function LoadingCard({ title }) {
   return (
@@ -38,6 +39,15 @@ function Stickers() {
     });
   };
 
+  const handleDownloadBook = async () => {
+    setNotice('');
+    try {
+      await downloadMonthlyMemoryBook({ pet, stickers: recentStickers });
+    } catch (err) {
+      setNotice(err.message);
+    }
+  };
+
   if (petLoading) return <LoadingCard title="正在读取宠物档案" />;
   if (!pet) {
     return (
@@ -65,6 +75,22 @@ function Stickers() {
       </section>
 
       <PetSwitcher activePetId={activePetId} label="当前宠物" onSelectPet={selectPet} pets={pets} />
+
+      <section className="rounded-card border border-paw-healthy/30 bg-paw-healthy/10 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold text-paw-healthy">月度成长纪念册</p>
+            <h2 className="mt-1 text-sm font-semibold text-paw-primary">把这个月的贴纸生成一张分享图</h2>
+          </div>
+          <button
+            className="shrink-0 rounded-control bg-paw-primary px-3 py-2 text-xs font-semibold text-paw-background"
+            onClick={handleDownloadBook}
+            type="button"
+          >
+            生成
+          </button>
+        </div>
+      </section>
 
       {(petError || stickerError) && (
         <section className="rounded-card border border-paw-danger bg-paw-danger/10 p-4 text-sm text-paw-danger">
