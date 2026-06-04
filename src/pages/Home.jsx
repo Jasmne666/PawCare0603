@@ -7,10 +7,10 @@ import PetSwitcher from '../components/PetSwitcher.jsx';
 import StickerCaptureModal from '../components/StickerCaptureModal.jsx';
 import TodayStickerCard from '../components/TodayStickerCard.jsx';
 import UpcomingTodosCard from '../components/UpcomingTodosCard.jsx';
-import { useDailyCareRecords } from '../hooks/useDailyCareRecords.js';
 import { usePetStickers } from '../hooks/usePetStickers.js';
 import { usePetTodos } from '../hooks/usePetTodos.js';
 import { usePets } from '../hooks/usePets.js';
+import { useTodayHealthLog } from '../hooks/useTodayHealthLog.js';
 import { useUserProfile } from '../hooks/useUserProfile.js';
 
 function LoadingCard({ title }) {
@@ -45,10 +45,10 @@ function Home() {
   const { activePetId, error: petError, loading: petLoading, pet, pets, selectPet } = usePets();
   const { loading: profileLoading, profile } = useUserProfile();
   const {
-    error: dailyCareError,
-    loading: dailyCareLoading,
-    record: dailyCareRecord,
-  } = useDailyCareRecords(pet?.id);
+    error: todayLogError,
+    loading: todayLogLoading,
+    log: todayLog,
+  } = useTodayHealthLog(pet?.id);
   const {
     completeTodo,
     createTodo,
@@ -69,7 +69,7 @@ function Home() {
   if (!pet) return <NoPetCard />;
 
   const relationName = profile?.pet_relation_name || '主人';
-  const error = petError || dailyCareError;
+  const error = petError || todayLogError;
 
   const handleStickerSave = async (payload) => {
     await saveSticker(payload);
@@ -87,7 +87,7 @@ function Home() {
         </section>
       )}
 
-      <HomeTodayStatusCard loading={dailyCareLoading} pet={pet} record={dailyCareRecord} />
+      <HomeTodayStatusCard loading={todayLogLoading} log={todayLog} pet={pet} />
 
       <UpcomingTodosCard
         error={todoError}
