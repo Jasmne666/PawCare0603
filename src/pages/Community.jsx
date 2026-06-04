@@ -11,11 +11,29 @@ const tabs = [
   { label: '关注', value: 'following' },
 ];
 
+const dailyTopics = [
+  '今天你家主子/狗子做了什么让你崩溃又爱它的事？',
+  '晒一张你家宠物最近最可爱的照片 📸',
+  '你家宠物有什么奇葩饮食习惯？',
+  '你是怎么发现自己爱上养宠这件事的？',
+  '你给宠物起名字有什么故事？',
+  '今天带宠物出门了吗？去了哪里？',
+  '你家宠物最近有让你担心的症状吗？来问问大家',
+];
+
+function getTodayTopic() {
+  const today = new Date();
+  const daySeed = today.getFullYear() * 1000 + Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+  return dailyTopics[daySeed % dailyTopics.length];
+}
+
 function Community() {
   const [feed, setFeed] = useState('all');
   const [composerOpen, setComposerOpen] = useState(false);
+  const [composerInitialContent, setComposerInitialContent] = useState('');
   const { user } = useAuth();
   const { activePetId, loading: petLoading, pet, pets, selectPet } = usePets();
+  const todayTopic = getTodayTopic();
   const {
     bumpCommentCount,
     createPost,
@@ -32,6 +50,11 @@ function Community() {
     setComposerOpen(false);
   };
 
+  const openComposer = (initialContent = '') => {
+    setComposerInitialContent(initialContent);
+    setComposerOpen(true);
+  };
+
   return (
     <div className="space-y-4">
       <section className="flex items-start justify-between gap-3">
@@ -43,7 +66,7 @@ function Community() {
         <button
           className="shrink-0 rounded-card bg-paw-primary px-4 py-3 text-sm font-semibold text-paw-background disabled:opacity-60"
           disabled={petLoading || !pet}
-          onClick={() => setComposerOpen(true)}
+          onClick={() => openComposer()}
           type="button"
         >
           发布
@@ -64,19 +87,6 @@ function Community() {
 
       <PetSwitcher activePetId={activePetId} label="发布身份" onSelectPet={selectPet} pets={pets} />
 
-      <section className="rounded-card border border-paw-healthy/30 bg-paw-healthy/10 p-4">
-        <p className="text-xs font-semibold text-paw-healthy">今日话题</p>
-        <h2 className="mt-1 text-sm font-semibold text-paw-primary">今天你家宠物做了什么可爱的事？</h2>
-        <button
-          className="mt-3 rounded-control bg-paw-card px-3 py-2 text-xs font-semibold text-paw-secondary"
-          disabled={petLoading || !pet}
-          onClick={() => setComposerOpen(true)}
-          type="button"
-        >
-          用这个话题发一条
-        </button>
-      </section>
-
       <div className="grid grid-cols-2 gap-2 rounded-card border border-paw-border bg-paw-card p-1">
         {tabs.map((tab) => (
           <button
@@ -92,12 +102,29 @@ function Community() {
         ))}
       </div>
 
+      {feed === 'all' && (
+        <button
+          className="w-full rounded-xl border border-paw-border bg-paw-background p-4 text-left shadow-sm disabled:opacity-50"
+          disabled={petLoading || !pet}
+          onClick={() => openComposer(`#今日话题 ${todayTopic}\n\n`)}
+          type="button"
+        >
+          <div className="flex gap-3">
+            <span className="mt-0.5 h-auto w-1 rounded-full bg-paw-primary" />
+            <div>
+              <p className="text-xs font-semibold text-paw-primary">🔥 今日话题</p>
+              <p className="mt-1 text-sm font-semibold leading-6 text-paw-secondary">{todayTopic}</p>
+            </div>
+          </div>
+        </button>
+      )}
+
       <CommunityFeed
         canCreatePost={!petLoading && Boolean(pet)}
         emptyText={feed === 'following' ? '还没有关注的宠物动态，来发一条自己的日常吧。' : '还没有动态，来发第一条吧'}
         loading={loading}
         onCommentAdded={bumpCommentCount}
-        onCreatePost={() => setComposerOpen(true)}
+        onCreatePost={() => openComposer()}
         onFollowPet={toggleFollowPet}
         onLike={toggleLike}
         posts={posts}
@@ -105,6 +132,7 @@ function Community() {
       />
 
       <PostComposer
+        initialContent={composerInitialContent}
         onClose={() => setComposerOpen(false)}
         onSubmit={handleCreatePost}
         open={composerOpen}
@@ -116,7 +144,7 @@ function Community() {
         aria-label="发布动态"
         className="fixed bottom-[96px] right-5 z-40 flex items-center justify-center rounded-full bg-paw-primary text-3xl leading-none text-paw-background shadow-[0_4px_16px_rgba(44,24,16,0.3)] disabled:opacity-50"
         disabled={petLoading || !pet}
-        onClick={() => setComposerOpen(true)}
+        onClick={() => openComposer()}
         style={{ height: 52, width: 52 }}
         type="button"
       >
