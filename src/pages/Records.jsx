@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import CycleInsightCard from '../components/CycleInsightCard.jsx';
 import HealthLogCalendarGrid from '../components/HealthLogCalendarGrid.jsx';
 import HealthLogDayDetail from '../components/HealthLogDayDetail.jsx';
+import HealthLogEntryModal from '../components/HealthLogEntryModal.jsx';
+import HealthLogEntryRows from '../components/HealthLogEntryRows.jsx';
 import PetSwitcher from '../components/PetSwitcher.jsx';
 import PetTodoComposer from '../components/PetTodoComposer.jsx';
-import RecordEntryModal from '../components/RecordEntryModal.jsx';
-import RecordEntryRows from '../components/RecordEntryRows.jsx';
-import { useDailyCareRecords, useMonthlyDailyCareRecords } from '../hooks/useDailyCareRecords.js';
+import { useMonthlyDailyCareRecords } from '../hooks/useDailyCareRecords.js';
+import { useHealthLogEntrySave } from '../hooks/useHealthLogEntrySave.js';
 import { useMonthlyHealthLogs } from '../hooks/useMonthlyHealthLogs.js';
-import { usePetStickers } from '../hooks/usePetStickers.js';
 import { usePetTodos } from '../hooks/usePetTodos.js';
 import { usePets } from '../hooks/usePets.js';
 import { formatMonthTitle, getLocalDateString, moveMonth } from '../utils/careCalendar.js';
@@ -52,28 +52,19 @@ function Records() {
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => getLocalDateString());
   const [activeSection, setActiveSection] = useState('');
-  const [unlockNotice, setUnlockNotice] = useState('');
   const [todoComposerOpen, setTodoComposerOpen] = useState(false);
   const { activePetId, error: petError, loading: petLoading, pet, pets, selectPet } = usePets();
-  const { error: careError, loadMonthRecords, loading: careLoading, records } = useMonthlyDailyCareRecords(pet?.id, monthDate);
-  const { error: healthLogError, loading: healthLogLoading, logs: healthLogs } = useMonthlyHealthLogs(pet?.id, monthDate);
-  const {
-    error: todayCareError,
-    loading: todayCareLoading,
-    saveCareRecordForDate,
-    saving: todayCareSaving,
-  } = useDailyCareRecords(pet?.id);
+  const { error: careError, loading: careLoading, records } = useMonthlyDailyCareRecords(pet?.id, monthDate);
+  const { error: healthLogError, loadHealthLogs, loading: healthLogLoading, logs: healthLogs } = useMonthlyHealthLogs(pet?.id, monthDate);
+  const { error: healthLogSaveError, saveHealthLogEntry, saving: healthLogSaving } = useHealthLogEntrySave(pet?.id);
   const { createTodo, error: todoError, loading: todoLoading, saving: todoSaving, todos } = usePetTodos(pet?.id);
-  const { saveRewardSticker } = usePetStickers(pet?.id);
-  const recordsByDate = useMemo(() => groupByDate(records, 'record_date'), [records]);
   const healthLogsByDate = useMemo(() => groupByDate(healthLogs, 'log_date'), [healthLogs]);
   const cycleInfo = useMemo(() => getCycleMarkers({ monthDate, pet: pet || {}, records }), [monthDate, pet, records]);
   const todosByDate = useMemo(() => groupByDate(todos, 'due_date'), [todos]);
-  const selectedRecord = recordsByDate[selectedDate]?.[0] || null;
   const selectedHealthLog = healthLogsByDate[selectedDate]?.[0] || null;
   const selectedTodos = todosByDate[selectedDate] || [];
   const isFutureDate = selectedDate > getLocalDateString();
-  const error = petError || healthLogError || careError || todoError;
+  const error = petError || healthLogError || careError || todoError || healthLogSaveError;
 
   const changeMonth = (offset) => {
     const nextMonth = moveMonth(monthDate, offset);
@@ -81,18 +72,9 @@ function Records() {
     setSelectedDate(getLocalDateString(new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1)));
   };
 
-  const saveSelectedCare = async (patch) => {
-    setUnlockNotice('');
-    const savedRecord = await saveCareRecordForDate(selectedDate, patch, selectedRecord);
-    await loadMonthRecords();
-    if (selectedDate <= getLocalDateString()) {
-      try {
-        const sticker = await saveRewardSticker({ date: selectedDate, pet, record: savedRecord });
-        if (sticker) setUnlockNotice(`已解锁 ${sticker.title || `${pet.name}的今日贴纸`}，可以去贴纸册查看。`);
-      } catch {
-        setUnlockNotice('记录已保存，贴纸解锁需要先确认 pet-stickers 存储桶可用。');
-      }
-    }
+  const saveSelectedHealthLog = async (patch) => {
+    await saveHealthLogEntry({ dateKey: selectedDate, log: selectedHealthLog, patch });
+    await loadHealthLogs();
     setActiveSection('');
   };
 
@@ -151,18 +133,11 @@ function Records() {
 
       <HealthLogDayDetail dateKey={selectedDate} log={selectedHealthLog} />
 
-      {unlockNotice && (
-        <section className="rounded-card border border-paw-healthy/30 bg-paw-healthy/10 p-4 text-sm text-paw-healthy">
-          {unlockNotice}
-        </section>
-      )}
-
-      <RecordEntryRows
+      <HealthLogEntryRows
         disabled={isFutureDate}
         disabledText="未来日期只能查看预测和待办，不能提前填写记录。"
         onOpenSection={setActiveSection}
-        pet={pet}
-        record={selectedRecord}
+        log={selectedHealthLog}
       />
       <CycleInsightCard notes={cycleInfo.notes} />
 
@@ -184,19 +159,12 @@ function Records() {
         </section>
       )}
 
-      {todayCareError && (
-        <section className="rounded-card border border-paw-danger bg-paw-danger/10 p-4 text-sm text-paw-danger">
-          {todayCareError}
-        </section>
-      )}
-
-      <RecordEntryModal
+      <HealthLogEntryModal
+        log={selectedHealthLog}
         onClose={() => setActiveSection('')}
-        onSave={saveSelectedCare}
+        onSave={saveSelectedHealthLog}
         open={Boolean(activeSection)}
-        pet={pet}
-        record={selectedRecord}
-        saving={todayCareLoading || todayCareSaving}
+        saving={healthLogSaving}
         sectionId={activeSection}
       />
 

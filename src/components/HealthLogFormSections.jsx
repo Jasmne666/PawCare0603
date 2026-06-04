@@ -1,5 +1,4 @@
 import {
-  activityLevelOptions,
   moodOptions,
   poopStatusOptions,
   symptomOptions,
@@ -107,13 +106,28 @@ export function HealthStatusSection({ form, inputClass, setField }) {
         />
       </ProfileField>
 
-      <ProfileField label="活跃度">
-        <LogChoiceGroup
-          onChange={(value) => setField('activity_level', value)}
-          options={activityLevelOptions}
-          value={form.activity_level}
-        />
-      </ProfileField>
+      <div className="grid grid-cols-2 gap-3">
+        <ProfileField hint="分钟" label="活动时长">
+          <input
+            className={inputClass}
+            min="0"
+            onChange={(event) => setField('activity_minutes', event.target.value)}
+            placeholder="例如：30"
+            type="number"
+            value={form.activity_minutes}
+          />
+        </ProfileField>
+        <ProfileField hint="分钟" label="互动时长">
+          <input
+            className={inputClass}
+            min="0"
+            onChange={(event) => setField('interaction_minutes', event.target.value)}
+            placeholder="例如：20"
+            type="number"
+            value={form.interaction_minutes}
+          />
+        </ProfileField>
+      </div>
     </section>
   );
 }

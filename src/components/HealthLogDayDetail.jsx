@@ -46,6 +46,16 @@ function HealthLogDayDetail({ dateKey, log }) {
         <span className="rounded-full bg-paw-background px-3 py-1 text-paw-muted">
           心情：{log.mood || '未记录'}
         </span>
+        {log.activity_minutes !== null && log.activity_minutes !== undefined && (
+          <span className="rounded-full bg-paw-background px-3 py-1 text-paw-muted">
+            活动：{log.activity_minutes}分钟
+          </span>
+        )}
+        {log.interaction_minutes !== null && log.interaction_minutes !== undefined && (
+          <span className="rounded-full bg-paw-background px-3 py-1 text-paw-muted">
+            互动：{log.interaction_minutes}分钟
+          </span>
+        )}
         {log.poop_status && (
           <span className="rounded-full bg-paw-background px-3 py-1 text-paw-muted">
             排便：{log.poop_status}
