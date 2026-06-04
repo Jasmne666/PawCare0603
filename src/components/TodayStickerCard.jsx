@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 function StickerPreview({ stickers }) {
   if (!stickers.length) {
     return (
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-card border border-dashed border-paw-border bg-paw-background text-xl">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-dashed border-paw-border bg-paw-background text-lg">
         ✨
       </div>
     );
@@ -15,7 +15,7 @@ function StickerPreview({ stickers }) {
       {stickers.slice(0, 3).map((sticker) => (
         <img
           alt={sticker.title || '宠物贴纸'}
-          className="h-14 w-14 rounded-card border-2 border-white object-cover shadow-sm"
+          className="h-11 w-11 rounded-control border-2 border-white object-cover shadow-sm"
           key={sticker.id}
           src={sticker.sticker_image_url || sticker.original_image_url}
         />
@@ -36,12 +36,12 @@ function TodayStickerCard({ error, loading, onFileSelected, pet, stickers }) {
   };
 
   return (
-    <section className="rounded-card border border-paw-border bg-paw-card p-4">
+    <section className="rounded-card border border-paw-border bg-paw-card p-3.5">
       <div className="flex items-center gap-3">
         <StickerPreview stickers={stickers} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h2 className="font-title text-xl font-semibold">今日贴纸</h2>
+            <h2 className="font-title text-lg font-semibold">今日贴纸</h2>
             <span className="rounded-full bg-paw-healthy/10 px-2 py-0.5 text-[10px] font-semibold text-paw-healthy">
               {loading ? '读取中' : `${stickers.length}张`}
             </span>
@@ -58,23 +58,23 @@ function TodayStickerCard({ error, loading, onFileSelected, pet, stickers }) {
         </p>
       )}
 
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-[1fr_1fr_auto] gap-2">
         <button
-          className="rounded-control bg-paw-primary px-3 py-2.5 text-xs font-semibold text-paw-background"
+          className="rounded-control bg-paw-primary px-3 py-2 text-xs font-semibold text-paw-background"
           onClick={() => cameraRef.current?.click()}
           type="button"
         >
           拍一张
         </button>
         <button
-          className="rounded-control border border-paw-border bg-paw-background px-3 py-2.5 text-xs font-semibold text-paw-secondary"
+          className="rounded-control border border-paw-border bg-paw-background px-3 py-2 text-xs font-semibold text-paw-secondary"
           onClick={() => galleryRef.current?.click()}
           type="button"
         >
           相册选
         </button>
         <Link
-          className="rounded-control bg-paw-healthy/10 px-3 py-2.5 text-center text-xs font-semibold text-paw-healthy"
+          className="rounded-control bg-paw-healthy/10 px-3 py-2 text-center text-xs font-semibold text-paw-healthy"
           to="/stickers"
         >
           贴纸册

@@ -13,9 +13,9 @@ function PetBasicInfoForm({ form, inputClass, setValue }) {
 
   return (
     <>
-      <section className="rounded-card border border-paw-border bg-paw-card p-5">
-        <div className="mb-5 flex items-center gap-4">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-card border border-paw-border bg-paw-background text-5xl">
+      <section className="rounded-card border border-paw-border bg-paw-card p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-card border border-paw-border bg-paw-background text-4xl">
             {avatarSrc ? (
               <img
                 src={avatarSrc}
@@ -27,10 +27,10 @@ function PetBasicInfoForm({ form, inputClass, setValue }) {
             )}
           </div>
           <div>
-            <h2 className="font-title text-2xl font-semibold">
+            <h2 className="font-title text-xl font-semibold">
               {form.name || '还没有名字'}
             </h2>
-            <p className="mt-1 text-sm text-paw-muted">
+            <p className="mt-1 text-xs text-paw-muted">
               {speciesLabel || '未选择物种'} · {breedLabel || '未填写品种'}
             </p>
           </div>
@@ -39,8 +39,8 @@ function PetBasicInfoForm({ form, inputClass, setValue }) {
 
       <PetAvatarSection form={form} setValue={setValue} />
 
-      <section className="space-y-4 rounded-card border border-paw-border bg-paw-card p-5">
-        <h2 className="font-title text-xl font-semibold">基本信息</h2>
+      <section className="space-y-3 rounded-card border border-paw-border bg-paw-card p-4">
+        <h2 className="font-title text-lg font-semibold">基本信息</h2>
 
         <ProfileField label="名字">
           <input
