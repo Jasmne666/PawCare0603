@@ -25,13 +25,14 @@ function PetTodoComposer({ initialDueDate, onClose, onSubmit, open, pet, saving 
   const [localError, setLocalError] = useState('');
   const selectedTemplate = useMemo(() => getPetTodoTemplate(form.type), [form.type]);
   const templates = useMemo(() => getPetTodoTemplatesForSpecies(pet?.species), [pet?.species]);
+  const defaultType = templates[0]?.type || 'external_deworming';
 
   useEffect(() => {
     if (open) {
-      setForm(getInitialForm('external_deworming', initialDueDate));
+      setForm(getInitialForm(defaultType, initialDueDate));
       setLocalError('');
     }
-  }, [initialDueDate, open]);
+  }, [defaultType, initialDueDate, open]);
 
   if (!open) return null;
 

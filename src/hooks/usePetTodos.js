@@ -9,6 +9,9 @@ function getFriendlyError(error) {
   if (message.includes('pet_todos')) {
     return '近期待办表还没创建。请先运行 supabase/pet_todos.sql。';
   }
+  if (message.includes('pet_todos_type_check')) {
+    return '待办类型还没更新。请先运行 supabase/pet_todos_species_types.sql。';
+  }
   return message || '待办操作失败';
 }
 
@@ -54,7 +57,7 @@ function buildNextTodo({ todo, today }) {
   };
 }
 
-export function usePetTodos(petId) {
+export function usePetTodos(petId, horizonDays = 365) {
   const { user } = useAuth();
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +81,7 @@ export function usePetTodos(petId) {
         .eq('user_id', user.id)
         .eq('pet_id', petId)
         .eq('is_done', false)
-        .lte('due_date', addDays(getLocalDateString(), 30))
+        .lte('due_date', addDays(getLocalDateString(), horizonDays))
         .order('due_date', { ascending: true })
         .order('created_at', { ascending: true });
 
@@ -89,7 +92,7 @@ export function usePetTodos(petId) {
     } finally {
       setLoading(false);
     }
-  }, [petId, user]);
+  }, [horizonDays, petId, user]);
 
   useEffect(() => {
     loadTodos();

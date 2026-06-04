@@ -80,17 +80,32 @@ function UpcomingTodosCard({
 }) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [notice, setNotice] = useState('');
   const scheduleTodos = useMemo(
     () => [...todos].sort((a, b) => getDaysUntil(a.due_date) - getDaysUntil(b.due_date)).slice(0, 4),
     [todos],
   );
 
   const handleComplete = async (todo) => {
+    setNotice('');
     setLocalError('');
     try {
       await onCompleteTodo(todo);
+      setNotice('已完成，本次照护已记录；如果设置了周期，下一次提醒已自动生成。');
     } catch (err) {
       setLocalError(err.message);
+    }
+  };
+
+  const handleCreate = async (form) => {
+    setNotice('');
+    setLocalError('');
+    try {
+      await onCreateTodo(form);
+      setNotice('已保存，下一次提醒已加入健康日程。');
+    } catch (err) {
+      setLocalError(err.message);
+      throw err;
     }
   };
 
@@ -116,6 +131,12 @@ function UpcomingTodosCard({
         </p>
       )}
 
+      {notice && (
+        <p className="mt-3 rounded-control border border-paw-healthy bg-paw-healthy/10 px-4 py-3 text-sm leading-6 text-paw-healthy">
+          {notice}
+        </p>
+      )}
+
       <div className="mt-4 space-y-2">
         {loading ? (
           <p className="rounded-control bg-paw-background px-4 py-3 text-sm text-paw-muted">正在读取待办...</p>
@@ -132,7 +153,7 @@ function UpcomingTodosCard({
 
       <PetTodoComposer
         onClose={() => setComposerOpen(false)}
-        onSubmit={onCreateTodo}
+        onSubmit={handleCreate}
         open={composerOpen}
         pet={pet}
         saving={saving}

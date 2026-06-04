@@ -34,7 +34,9 @@ export function getPetTodoTemplate(type) {
 
 export function getPetTodoTemplatesForSpecies(species) {
   if (!species) return petTodoTemplates;
-  return petTodoTemplates.filter((template) => template.species.includes('all') || template.species.includes(species));
+  const speciesTemplates = petTodoTemplates.filter((template) => template.species.includes(species));
+  const generalTemplates = petTodoTemplates.filter((template) => template.species.includes('all'));
+  return [...speciesTemplates, ...generalTemplates];
 }
 
 export function getPetTodoSpeciesHint(species) {

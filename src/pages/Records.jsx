@@ -57,7 +57,7 @@ function Records() {
   const { error: careError, loading: careLoading, records } = useMonthlyDailyCareRecords(pet?.id, monthDate);
   const { error: healthLogError, loadHealthLogs, loading: healthLogLoading, logs: healthLogs } = useMonthlyHealthLogs(pet?.id, monthDate);
   const { error: healthLogSaveError, saveHealthLogEntry, saving: healthLogSaving } = useHealthLogEntrySave(pet?.id);
-  const { createTodo, error: todoError, loading: todoLoading, saving: todoSaving, todos } = usePetTodos(pet?.id);
+  const { createTodo, error: todoError, loading: todoLoading, saving: todoSaving, todos } = usePetTodos(pet?.id, 30);
   const healthLogsByDate = useMemo(() => groupByDate(healthLogs, 'log_date'), [healthLogs]);
   const cycleInfo = useMemo(() => getCycleMarkers({ monthDate, pet: pet || {}, records }), [monthDate, pet, records]);
   const todosByDate = useMemo(() => groupByDate(todos, 'due_date'), [todos]);
