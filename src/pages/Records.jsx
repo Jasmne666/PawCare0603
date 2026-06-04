@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CycleInsightCard from '../components/CycleInsightCard.jsx';
-import HealthCalendarGrid from '../components/HealthCalendarGrid.jsx';
+import HealthLogCalendarGrid from '../components/HealthLogCalendarGrid.jsx';
+import HealthLogDayDetail from '../components/HealthLogDayDetail.jsx';
 import PetSwitcher from '../components/PetSwitcher.jsx';
 import PetTodoComposer from '../components/PetTodoComposer.jsx';
 import RecordEntryModal from '../components/RecordEntryModal.jsx';
 import RecordEntryRows from '../components/RecordEntryRows.jsx';
 import { useDailyCareRecords, useMonthlyDailyCareRecords } from '../hooks/useDailyCareRecords.js';
+import { useMonthlyHealthLogs } from '../hooks/useMonthlyHealthLogs.js';
 import { usePetStickers } from '../hooks/usePetStickers.js';
 import { usePetTodos } from '../hooks/usePetTodos.js';
 import { usePets } from '../hooks/usePets.js';
@@ -54,6 +56,7 @@ function Records() {
   const [todoComposerOpen, setTodoComposerOpen] = useState(false);
   const { activePetId, error: petError, loading: petLoading, pet, pets, selectPet } = usePets();
   const { error: careError, loadMonthRecords, loading: careLoading, records } = useMonthlyDailyCareRecords(pet?.id, monthDate);
+  const { error: healthLogError, loading: healthLogLoading, logs: healthLogs } = useMonthlyHealthLogs(pet?.id, monthDate);
   const {
     error: todayCareError,
     loading: todayCareLoading,
@@ -61,15 +64,16 @@ function Records() {
     saving: todayCareSaving,
   } = useDailyCareRecords(pet?.id);
   const { createTodo, error: todoError, loading: todoLoading, saving: todoSaving, todos } = usePetTodos(pet?.id);
-  const { recentStickers, saveRewardSticker } = usePetStickers(pet?.id);
+  const { saveRewardSticker } = usePetStickers(pet?.id);
   const recordsByDate = useMemo(() => groupByDate(records, 'record_date'), [records]);
+  const healthLogsByDate = useMemo(() => groupByDate(healthLogs, 'log_date'), [healthLogs]);
   const cycleInfo = useMemo(() => getCycleMarkers({ monthDate, pet: pet || {}, records }), [monthDate, pet, records]);
   const todosByDate = useMemo(() => groupByDate(todos, 'due_date'), [todos]);
-  const stickersByDate = useMemo(() => groupByDate(recentStickers, 'captured_date'), [recentStickers]);
   const selectedRecord = recordsByDate[selectedDate]?.[0] || null;
+  const selectedHealthLog = healthLogsByDate[selectedDate]?.[0] || null;
   const selectedTodos = todosByDate[selectedDate] || [];
   const isFutureDate = selectedDate > getLocalDateString();
-  const error = petError || careError || todoError;
+  const error = petError || healthLogError || careError || todoError;
 
   const changeMonth = (offset) => {
     const nextMonth = moveMonth(monthDate, offset);
@@ -132,22 +136,20 @@ function Records() {
         </button>
       </section>
 
-      {careLoading || todoLoading ? (
+      {healthLogLoading || careLoading || todoLoading ? (
         <LoadingCard title="正在生成记录月历" />
       ) : (
-        <HealthCalendarGrid
-          monthDate={monthDate}
-          cycleMarkers={cycleInfo.markers}
-          onSelectDate={setSelectedDate}
-          pet={pet}
-          recordsByDate={Object.fromEntries(
-            Object.entries(recordsByDate).map(([dateKey, value]) => [dateKey, value[0]]),
+        <HealthLogCalendarGrid
+          logsByDate={Object.fromEntries(
+            Object.entries(healthLogsByDate).map(([dateKey, value]) => [dateKey, value[0]]),
           )}
+          monthDate={monthDate}
+          onSelectDate={setSelectedDate}
           selectedDate={selectedDate}
-          stickersByDate={stickersByDate}
-          todosByDate={todosByDate}
         />
       )}
+
+      <HealthLogDayDetail dateKey={selectedDate} log={selectedHealthLog} />
 
       {unlockNotice && (
         <section className="rounded-card border border-paw-healthy/30 bg-paw-healthy/10 p-4 text-sm text-paw-healthy">
