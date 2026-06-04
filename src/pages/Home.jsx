@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DailyPetTipCard from '../components/DailyPetTipCard.jsx';
+import HealthScheduleCard from '../components/HealthScheduleCard.jsx';
 import HomeTodayStatusCard from '../components/HomeTodayStatusCard.jsx';
 import { HomeHeader } from '../components/HomeDashboardSections.jsx';
 import PetSwitcher from '../components/PetSwitcher.jsx';
 import StickerCaptureModal from '../components/StickerCaptureModal.jsx';
 import TodayStickerCard from '../components/TodayStickerCard.jsx';
-import UpcomingTodosCard from '../components/UpcomingTodosCard.jsx';
 import { usePetStickers } from '../hooks/usePetStickers.js';
-import { usePetTodos } from '../hooks/usePetTodos.js';
 import { usePets } from '../hooks/usePets.js';
+import { useReminders } from '../hooks/useReminders.js';
 import { useTodayHealthLog } from '../hooks/useTodayHealthLog.js';
 import { useUserProfile } from '../hooks/useUserProfile.js';
 
@@ -49,14 +49,7 @@ function Home() {
     loading: todayLogLoading,
     log: todayLog,
   } = useTodayHealthLog(pet?.id);
-  const {
-    completeTodo,
-    createTodo,
-    error: todoError,
-    loading: todoLoading,
-    saving: todoSaving,
-    todos,
-  } = usePetTodos(pet?.id);
+  const { error: reminderError, loading: reminderLoading, reminders } = useReminders(pet?.id);
   const {
     error: stickerError,
     loading: stickerLoading,
@@ -89,15 +82,7 @@ function Home() {
 
       <HomeTodayStatusCard loading={todayLogLoading} log={todayLog} pet={pet} />
 
-      <UpcomingTodosCard
-        error={todoError}
-        loading={todoLoading}
-        onCompleteTodo={completeTodo}
-        onCreateTodo={createTodo}
-        pet={pet}
-        saving={todoSaving}
-        todos={todos}
-      />
+      <HealthScheduleCard error={reminderError} loading={reminderLoading} reminders={reminders} />
 
       <TodayStickerCard
         error={stickerError}
