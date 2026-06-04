@@ -5,6 +5,8 @@ import PetSwitcher from '../components/PetSwitcher.jsx';
 import { useAiConversations } from '../hooks/useAiConversations.js';
 import { usePets } from '../hooks/usePets.js';
 import { useRecentHealthLogs } from '../hooks/useRecentHealthLogs.js';
+import { useSevenDayHealthLogCount } from '../hooks/useSevenDayHealthLogCount.js';
+import { getDeepSeekApiKey } from '../lib/deepseek.js';
 
 const quickPrompts = [
   '分析近期整体健康',
@@ -65,8 +67,10 @@ function AI() {
   const endRef = useRef(null);
   const sentInitialRef = useRef(false);
   const { activePetId, loading: petLoading, pet, pets, selectPet } = usePets();
-  const { loading: logLoading, logs } = useRecentHealthLogs(pet?.id, 5);
+  const { loading: logLoading, logs } = useRecentHealthLogs(pet?.id, 7);
+  const { count: sevenDayLogCount } = useSevenDayHealthLogCount(pet?.id);
   const { error, loading: messageLoading, messages, sendMessage, sending } = useAiConversations(pet?.id);
+  const [hasDeepSeekKey, setHasDeepSeekKey] = useState(Boolean(getDeepSeekApiKey()));
   const [input, setInput] = useState('');
   const [localError, setLocalError] = useState('');
 
@@ -117,11 +121,13 @@ function AI() {
 
       <PetSwitcher activePetId={activePetId} label="AI 分析对象" onSelectPet={selectPet} pets={pets} />
 
-      <section className="rounded-control border border-paw-healthy/30 bg-paw-healthy/10 px-4 py-3 text-xs font-semibold text-paw-healthy">
-        ✓ 已读取{pet.name}近{logs.length || 0}条健康记录，会结合档案一起回答
-      </section>
+      {hasDeepSeekKey && (
+        <section className="rounded-control border border-paw-healthy/30 bg-paw-healthy/10 px-4 py-3 text-[11px] font-semibold text-paw-healthy">
+          ✓ 已读取{pet.name}近7天记录 · {sevenDayLogCount}条数据
+        </section>
+      )}
 
-      <DeepSeekKeyPanel />
+      <DeepSeekKeyPanel onKeySaved={() => setHasDeepSeekKey(Boolean(getDeepSeekApiKey()))} petName={pet.name} variant="ai" />
 
       {(localError || error) && (
         <section className="rounded-card border border-paw-danger bg-paw-danger/10 p-4 text-sm text-paw-danger">
@@ -129,7 +135,10 @@ function AI() {
         </section>
       )}
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div
+        className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1 pr-10 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {quickPrompts.map((prompt) => (
           <button
             className="shrink-0 rounded-full border border-paw-border bg-paw-card px-4 py-2 text-xs font-semibold text-paw-secondary"
@@ -140,6 +149,7 @@ function AI() {
             {prompt}
           </button>
         ))}
+        <span className="block w-px shrink-0" />
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto pr-1">
