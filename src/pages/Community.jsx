@@ -64,6 +64,19 @@ function Community() {
 
       <PetSwitcher activePetId={activePetId} label="发布身份" onSelectPet={selectPet} pets={pets} />
 
+      <section className="rounded-card border border-paw-healthy/30 bg-paw-healthy/10 p-4">
+        <p className="text-xs font-semibold text-paw-healthy">今日话题</p>
+        <h2 className="mt-1 text-sm font-semibold text-paw-primary">今天你家宠物做了什么可爱的事？</h2>
+        <button
+          className="mt-3 rounded-control bg-paw-card px-3 py-2 text-xs font-semibold text-paw-secondary"
+          disabled={petLoading || !pet}
+          onClick={() => setComposerOpen(true)}
+          type="button"
+        >
+          用这个话题发一条
+        </button>
+      </section>
+
       <div className="grid grid-cols-2 gap-2 rounded-card border border-paw-border bg-paw-card p-1">
         {tabs.map((tab) => (
           <button
@@ -96,6 +109,16 @@ function Community() {
         pet={pet}
         saving={saving}
       />
+
+      <button
+        aria-label="发布动态"
+        className="fixed bottom-24 left-1/2 z-40 flex h-14 w-14 translate-x-[150px] items-center justify-center rounded-full bg-paw-primary text-3xl leading-none text-paw-background shadow-xl disabled:opacity-50 max-[430px]:translate-x-[125px]"
+        disabled={petLoading || !pet}
+        onClick={() => setComposerOpen(true)}
+        type="button"
+      >
+        +
+      </button>
     </div>
   );
 }

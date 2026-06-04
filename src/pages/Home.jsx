@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DailyPetTipCard from '../components/DailyPetTipCard.jsx';
+import HomeTodayStatusCard from '../components/HomeTodayStatusCard.jsx';
 import { HomeHeader } from '../components/HomeDashboardSections.jsx';
 import PetSwitcher from '../components/PetSwitcher.jsx';
 import StickerCaptureModal from '../components/StickerCaptureModal.jsx';
 import TodayStickerCard from '../components/TodayStickerCard.jsx';
 import UpcomingTodosCard from '../components/UpcomingTodosCard.jsx';
-import { getDailyCareLabel } from '../data/dailyCareOptions.js';
 import { useDailyCareRecords } from '../hooks/useDailyCareRecords.js';
 import { usePetStickers } from '../hooks/usePetStickers.js';
 import { usePetTodos } from '../hooks/usePetTodos.js';
 import { usePets } from '../hooks/usePets.js';
 import { useUserProfile } from '../hooks/useUserProfile.js';
-import { getCareFace } from '../utils/careCalendar.js';
 
 function LoadingCard({ title }) {
   return (
@@ -38,30 +37,6 @@ function NoPetCard() {
         去添加宠物
       </Link>
     </section>
-  );
-}
-
-function TodayStatusHint({ loading, pet, record }) {
-  const title = record ? '今天已记录｜查看详情' : '今天还没记录｜去记录';
-
-  return (
-    <Link
-      className="flex items-center gap-3 rounded-card border border-paw-border bg-paw-card p-4"
-      to="/records"
-    >
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card bg-paw-background text-2xl">
-        {loading ? '🐾' : getCareFace(record, pet)}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-paw-primary">{title}</p>
-        <p className="mt-1 truncate text-xs text-paw-muted">
-          {record
-            ? `精神 ${getDailyCareLabel('mood', record.mood)} · 互动 ${getDailyCareLabel('interaction', record.interaction)}`
-            : '详细吃饭、喝水、便便和互动都放在记录页。'}
-        </p>
-      </div>
-      <span className="text-paw-muted">›</span>
-    </Link>
   );
 }
 
@@ -112,7 +87,7 @@ function Home() {
         </section>
       )}
 
-      <TodayStatusHint loading={dailyCareLoading} pet={pet} record={dailyCareRecord} />
+      <HomeTodayStatusCard loading={dailyCareLoading} pet={pet} record={dailyCareRecord} />
 
       <UpcomingTodosCard
         error={todoError}

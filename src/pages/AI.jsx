@@ -117,6 +117,10 @@ function AI() {
 
       <PetSwitcher activePetId={activePetId} label="AI 分析对象" onSelectPet={selectPet} pets={pets} />
 
+      <section className="rounded-control border border-paw-healthy/30 bg-paw-healthy/10 px-4 py-3 text-xs font-semibold text-paw-healthy">
+        ✓ 已读取{pet.name}近{logs.length || 0}条健康记录，会结合档案一起回答
+      </section>
+
       <DeepSeekKeyPanel />
 
       {(localError || error) && (

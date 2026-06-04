@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import PetBasicInfoForm from '../components/PetBasicInfoForm.jsx';
 import PetHealthForm from '../components/PetHealthForm.jsx';
+import ProfileAchievementCard from '../components/ProfileAchievementCard.jsx';
 import ProfilePetList from '../components/ProfilePetList.jsx';
 import { emptyPetForm, usePets } from '../hooks/usePets.js';
 import { useAuth } from '../hooks/useAuth.js';
+import { useMonthlyDailyCareRecords } from '../hooks/useDailyCareRecords.js';
 import { useUserProfile } from '../hooks/useUserProfile.js';
 
 const inputClass =
@@ -11,7 +13,7 @@ const inputClass =
 
 function Profile() {
   const { user } = useAuth();
-  const { error, formFromPet, loading, pets, savePet, saving, selectPet } = usePets();
+  const { activePetId, error, formFromPet, loading, pet, pets, savePet, saving, selectPet } = usePets();
   const {
     error: profileError,
     loading: profileLoading,
@@ -27,6 +29,7 @@ function Profile() {
   const [profileEditing, setProfileEditing] = useState(false);
   const [relationDraft, setRelationDraft] = useState('');
   const [usernameDraft, setUsernameDraft] = useState('');
+  const { records } = useMonthlyDailyCareRecords(activePetId, new Date());
 
   useEffect(() => {
     setUsernameDraft(profile?.username || '');
@@ -190,6 +193,8 @@ function Profile() {
           {notice || formError || error || profileError}
         </section>
       )}
+
+      <ProfileAchievementCard pet={pet} records={records} />
 
       <ProfilePetList onAdd={addPet} onEdit={editPet} pets={pets} />
     </div>

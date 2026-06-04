@@ -22,12 +22,17 @@ function RecordEntryRows({ disabled, disabledText, onOpenSection, pet, record })
             {section.icon}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-paw-primary">{section.label}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-semibold text-paw-primary">{section.label}</p>
+              <span className="text-[10px] text-paw-muted">✏️</span>
+            </div>
             <p className="mt-0.5 truncate text-xs text-paw-muted">
               {getRecordSectionSummary(section.id, record, pet)}
             </p>
           </div>
-          <span className="text-lg leading-none text-paw-muted">＋</span>
+          <span className="rounded-full bg-paw-healthy/10 px-2 py-1 text-xs font-semibold text-paw-healthy">
+            编辑
+          </span>
         </button>
       ))}
     </section>

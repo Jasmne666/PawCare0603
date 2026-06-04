@@ -1,7 +1,5 @@
 import {
   getCalendarDays,
-  getCareFace,
-  getCareRecordIcons,
   getCareStatusLevel,
   getLocalDateString,
 } from '../utils/careCalendar.js';
@@ -34,6 +32,14 @@ function getMarkerClass(marker) {
   return '';
 }
 
+function getStatusDot(record) {
+  const level = getCareStatusLevel(record);
+  if (level === 'severe') return 'bg-paw-danger';
+  if (level === 'mild') return 'bg-paw-warning';
+  if (level === 'normal') return 'bg-paw-healthy';
+  return '';
+}
+
 function getTodoHint(todo) {
   if (!todo) return '';
   const days = getDaysUntil(todo.due_date);
@@ -45,7 +51,6 @@ function getTodoHint(todo) {
 function HealthCalendarGrid({
   monthDate,
   onSelectDate,
-  pet,
   recordsByDate,
   selectedDate,
   cycleMarkers = {},
@@ -65,9 +70,9 @@ function HealthCalendarGrid({
       <div className="grid grid-cols-7 gap-1.5">
         {days.map((day) => {
           const record = recordsByDate[day.dateKey];
-          const icons = getCareRecordIcons(record);
           const marker = cycleMarkers[day.dateKey];
           const markerClass = getMarkerClass(marker);
+          const dotClass = getStatusDot(record);
 
           return (
             <button
@@ -87,15 +92,10 @@ function HealthCalendarGrid({
                   <span className="h-1.5 w-1.5 rounded-full bg-paw-healthy" />
                 )}
               </div>
-              {record && <div className="mt-0.5 text-center text-sm">{getCareFace(record, pet)}</div>}
+              {dotClass && <div className={`mx-auto mt-2 h-2.5 w-2.5 rounded-full ${dotClass}`} />}
               {marker && !record && (
                 <div className="mt-0.5 truncate text-center text-[9px] font-semibold">{marker.label}</div>
               )}
-              <div className="mt-0.5 flex flex-wrap justify-center gap-0.5 text-[9px] leading-none">
-                {icons.map((icon) => (
-                  <span key={`${day.dateKey}-${icon}`}>{icon}</span>
-                ))}
-              </div>
               {getTodoHint(todosByDate[day.dateKey]?.[0]) && (
                 <p className="mt-1 truncate text-center text-[9px] font-medium text-paw-muted/70">
                   {getTodoHint(todosByDate[day.dateKey][0])}
