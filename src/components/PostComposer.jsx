@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
+const emptyImageUrls = [];
+
 function PostComposer({
   initialContent = '',
-  initialImageUrls = [],
+  initialImageUrls = emptyImageUrls,
   open,
   onClose,
   onSubmit,
