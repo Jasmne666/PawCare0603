@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DailyPetTipCard from '../components/DailyPetTipCard.jsx';
+import HomeQuickRecordCard from '../components/HomeQuickRecordCard.jsx';
 import HomeTodayStatusCard from '../components/HomeTodayStatusCard.jsx';
 import { HomeHeader } from '../components/HomeDashboardSections.jsx';
 import PetSwitcher from '../components/PetSwitcher.jsx';
 import StickerCaptureModal from '../components/StickerCaptureModal.jsx';
 import TodayStickerCard from '../components/TodayStickerCard.jsx';
 import UpcomingTodosCard from '../components/UpcomingTodosCard.jsx';
+import { buildQuickHealthPatch, quickHealthRecordSymptoms } from '../data/quickHealthRecordOptions.js';
+import { useHealthLogEntrySave } from '../hooks/useHealthLogEntrySave.js';
 import { usePetStickers } from '../hooks/usePetStickers.js';
 import { usePetTodos } from '../hooks/usePetTodos.js';
 import { usePets } from '../hooks/usePets.js';
@@ -46,9 +49,16 @@ function Home() {
   const { loading: profileLoading, profile } = useUserProfile();
   const {
     error: todayLogError,
+    loadTodayLog,
     loading: todayLogLoading,
     log: todayLog,
+    today,
   } = useTodayHealthLog(pet?.id);
+  const {
+    error: quickRecordError,
+    saveHealthLogEntry,
+    saving: quickRecordSaving,
+  } = useHealthLogEntrySave(pet?.id);
   const {
     completeTodo,
     createTodo,
@@ -69,11 +79,28 @@ function Home() {
   if (!pet) return <NoPetCard />;
 
   const relationName = profile?.pet_relation_name || '主人';
-  const error = petError || todayLogError;
+  const error = petError || todayLogError || quickRecordError;
 
   const handleStickerSave = async (payload) => {
     await saveSticker(payload);
     setCaptureFile(null);
+  };
+
+  const handleQuickRecordSave = async (selection) => {
+    const patch = buildQuickHealthPatch(selection);
+    const quickSymptomSet = new Set(quickHealthRecordSymptoms);
+    const existingSymptoms = (todayLog?.symptoms || []).filter((symptom) => !quickSymptomSet.has(symptom));
+    const mergedSymptoms = new Set([...existingSymptoms, ...(patch.symptoms || [])]);
+
+    await saveHealthLogEntry({
+      dateKey: today,
+      log: todayLog,
+      patch: {
+        ...patch,
+        symptoms: [...mergedSymptoms],
+      },
+    });
+    await loadTodayLog();
   };
 
   return (
@@ -88,6 +115,13 @@ function Home() {
       )}
 
       <HomeTodayStatusCard loading={todayLogLoading} log={todayLog} pet={pet} />
+
+      <HomeQuickRecordCard
+        hasTodayLog={Boolean(todayLog)}
+        onSave={handleQuickRecordSave}
+        petName={pet.name}
+        saving={quickRecordSaving}
+      />
 
       <UpcomingTodosCard
         error={todoError}
