@@ -9,7 +9,7 @@ function Login() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const { hasSupabaseConfig, session, signIn, signUp } = useAuth();
+  const { authError, hasSupabaseConfig, session, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
@@ -101,9 +101,9 @@ function Login() {
           </div>
         )}
 
-        {error && (
+        {(error || authError) && (
           <div className="mb-4 rounded-control border border-paw-danger bg-[#FDEAEA] px-4 py-3 text-sm text-paw-danger">
-            {error}
+            {error || authError}
           </div>
         )}
 

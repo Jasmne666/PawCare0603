@@ -11,6 +11,14 @@ import { hasSupabaseConfig, supabase } from '../lib/supabase.js';
 
 const AuthContext = createContext(null);
 
+function getAuthFriendlyError(error, fallback) {
+  const message = error?.message || '';
+  if (message === 'Failed to fetch' || message.includes('fetch')) {
+    return '无法连接 Supabase。请检查网络、代理/VPN、DNS，或确认 Supabase 项目没有暂停。';
+  }
+  return message || fallback;
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,7 +38,7 @@ export function AuthProvider({ children }) {
         if (error) throw error;
         if (mounted) setSession(data.session ?? null);
       } catch (error) {
-        if (mounted) setAuthError(error.message || '读取登录状态失败');
+        if (mounted) setAuthError(getAuthFriendlyError(error, '读取登录状态失败'));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -70,7 +78,7 @@ export function AuthProvider({ children }) {
       setSession(data.session ?? null);
       return data;
     } catch (error) {
-      throw new Error(error.message || '登录失败，请稍后重试');
+      throw new Error(getAuthFriendlyError(error, '登录失败，请稍后重试'));
     }
   }, []);
 
@@ -86,7 +94,7 @@ export function AuthProvider({ children }) {
       setSession(data.session ?? null);
       return data;
     } catch (error) {
-      throw new Error(error.message || '注册失败，请稍后重试');
+      throw new Error(getAuthFriendlyError(error, '注册失败，请稍后重试'));
     }
   }, []);
 
@@ -98,7 +106,7 @@ export function AuthProvider({ children }) {
       if (error) throw error;
       setSession(null);
     } catch (error) {
-      throw new Error(error.message || '退出登录失败');
+      throw new Error(getAuthFriendlyError(error, '退出登录失败'));
     }
   }, []);
 
