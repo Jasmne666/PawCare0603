@@ -8,6 +8,9 @@ import {
 function getCloudBaseError(error) {
   const message = error?.message || error?.msg || error?.errmsg || '';
   const code = error?.code || error?.errorCode || error?.errCode;
+  if (code === 'INVALID_USERNAME_OR_PASSWORD') {
+    return '邮箱或密码不正确。请确认：1）邮箱验证链接已经点击激活；2）登录密码和注册时完全一致；3）CloudBase 控制台已开启邮箱登录。';
+  }
   if (message.includes('SDK')) return message;
   if (message.includes('network') || message.includes('fetch')) {
     return '无法连接 CloudBase，请检查网络或 CloudBase 环境配置。';
@@ -37,8 +40,8 @@ function CloudBaseAuthPanel() {
       setError('请输入邮箱和密码');
       return;
     }
-    if (password.length < 6) {
-      setError('密码至少需要 6 位');
+    if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+      setError('CloudBase 邮箱密码要求 8-32 位，并且至少包含字母和数字');
       return;
     }
 
@@ -66,7 +69,7 @@ function CloudBaseAuthPanel() {
         这一步只验证 CloudBase 邮箱注册/登录，不会进入 PawCare 主应用，也不会影响现有数据。
       </p>
       <p className="mt-2 text-xs leading-5 text-paw-muted">
-        如果注册成功但登录失败，请先确认邮箱验证已完成，并确认 CloudBase 身份认证开启的是邮箱密码登录。
+        如果注册成功但登录失败，请先确认邮箱验证邮件里的激活链接已点击完成。
       </p>
 
       {!hasCloudBaseConfig && (
@@ -97,7 +100,7 @@ function CloudBaseAuthPanel() {
         <input
           className="w-full rounded-control border border-paw-border bg-paw-background px-4 py-3 text-sm outline-none focus:border-paw-healthy"
           onChange={(event) => setPassword(event.target.value)}
-          placeholder="至少 6 位密码"
+          placeholder="8-32 位，包含字母和数字"
           type="password"
           value={password}
         />
