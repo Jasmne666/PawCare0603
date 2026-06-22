@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import {
   hasCloudBaseConfig,
-  signInCloudBaseWithEmail,
-  signUpCloudBaseWithEmail,
+  sendCloudBaseEmailOtp,
+  verifyCloudBaseEmailOtp,
 } from '../lib/cloudbase.js';
 
 function getCloudBaseError(error) {
@@ -27,33 +27,46 @@ function getCloudBaseError(error) {
 
 function CloudBaseAuthPanel() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [token, setToken] = useState('');
+  const [verifyOtp, setVerifyOtp] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const submit = async (mode) => {
+  const sendCode = async () => {
     setError('');
     setMessage('');
 
-    if (!email || !password) {
-      setError('请输入邮箱和密码');
-      return;
-    }
-    if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
-      setError('CloudBase 邮箱密码要求 8-32 位，并且至少包含字母和数字');
+    if (!email) {
+      setError('请输入邮箱');
       return;
     }
 
     setSubmitting(true);
     try {
-      if (mode === 'register') {
-        await signUpCloudBaseWithEmail({ email, password });
-        setMessage('CloudBase 注册请求已发送。若开启邮箱验证，请先查看邮箱。');
-      } else {
-        await signInCloudBaseWithEmail({ email, password });
-        setMessage('CloudBase 登录成功。下一步可以迁移 PawCare 数据层。');
-      }
+      const nextVerifyOtp = await sendCloudBaseEmailOtp(email);
+      setVerifyOtp(() => nextVerifyOtp);
+      setMessage('验证码已发送，请查看邮箱，然后输入验证码完成登录。');
+    } catch (err) {
+      setError(getCloudBaseError(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const verifyCode = async () => {
+    setError('');
+    setMessage('');
+
+    if (!token) {
+      setError('请输入邮箱验证码');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await verifyCloudBaseEmailOtp(verifyOtp, token);
+      setMessage('CloudBase 登录成功。下一步可以迁移 PawCare 数据层。');
     } catch (err) {
       setError(getCloudBaseError(err));
     } finally {
@@ -68,9 +81,7 @@ function CloudBaseAuthPanel() {
       <p className="mt-2 text-xs leading-5 text-paw-muted">
         这一步只验证 CloudBase 邮箱注册/登录，不会进入 PawCare 主应用，也不会影响现有数据。
       </p>
-      <p className="mt-2 text-xs leading-5 text-paw-muted">
-        如果注册成功但登录失败，请先确认邮箱验证邮件里的激活链接已点击完成。
-      </p>
+      <p className="mt-2 text-xs leading-5 text-paw-muted">当前按邮箱验证码方式测试：先发送验证码，再输入邮箱收到的验证码登录。</p>
 
       {!hasCloudBaseConfig && (
         <p className="mt-3 rounded-control border border-paw-warning bg-[#FDF0D8] px-3 py-2 text-xs text-paw-secondary">
@@ -99,10 +110,11 @@ function CloudBaseAuthPanel() {
         />
         <input
           className="w-full rounded-control border border-paw-border bg-paw-background px-4 py-3 text-sm outline-none focus:border-paw-healthy"
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="8-32 位，包含字母和数字"
-          type="password"
-          value={password}
+          inputMode="numeric"
+          onChange={(event) => setToken(event.target.value.trim())}
+          placeholder="邮箱验证码"
+          type="text"
+          value={token}
         />
       </div>
 
@@ -110,18 +122,18 @@ function CloudBaseAuthPanel() {
         <button
           className="rounded-control border border-paw-border bg-paw-background px-4 py-3 text-sm font-semibold text-paw-secondary disabled:opacity-50"
           disabled={submitting || !hasCloudBaseConfig}
-          onClick={() => submit('register')}
+          onClick={sendCode}
           type="button"
         >
-          注册测试
+          发送验证码
         </button>
         <button
           className="rounded-control bg-paw-primary px-4 py-3 text-sm font-semibold text-paw-background disabled:opacity-50"
-          disabled={submitting || !hasCloudBaseConfig}
-          onClick={() => submit('login')}
+          disabled={submitting || !hasCloudBaseConfig || !verifyOtp}
+          onClick={verifyCode}
           type="button"
         >
-          登录测试
+          验证并登录
         </button>
       </div>
     </section>
