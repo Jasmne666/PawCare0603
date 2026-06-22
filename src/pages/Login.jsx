@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import CloudBaseAuthPanel from '../components/CloudBaseAuthPanel.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 
 function Login() {
@@ -64,10 +65,7 @@ function Login() {
         <h1 className="mt-2 font-title text-4xl font-semibold">PawCare</h1>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-card border border-paw-border bg-paw-card p-5 shadow-sm"
-      >
+      <form onSubmit={handleSubmit} className="rounded-card border border-paw-border bg-paw-card p-5 shadow-sm">
         <div className="mb-5 grid grid-cols-2 rounded-control bg-paw-background p-1">
           <button
             type="button"
@@ -137,6 +135,8 @@ function Login() {
           {submitting ? '处理中...' : isLogin ? '登录' : '创建账号'}
         </button>
       </form>
+
+      <CloudBaseAuthPanel />
     </section>
   );
 }
