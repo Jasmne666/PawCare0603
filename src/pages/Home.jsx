@@ -13,6 +13,7 @@ import { useHealthLogEntrySave } from '../hooks/useHealthLogEntrySave.js';
 import { usePetStickers } from '../hooks/usePetStickers.js';
 import { usePetTodos } from '../hooks/usePetTodos.js';
 import { usePets } from '../hooks/usePets.js';
+import { useRecentHealthLogs } from '../hooks/useRecentHealthLogs.js';
 import { useTodayHealthLog } from '../hooks/useTodayHealthLog.js';
 import { useUserProfile } from '../hooks/useUserProfile.js';
 
@@ -60,6 +61,11 @@ function Home() {
     saving: quickRecordSaving,
   } = useHealthLogEntrySave(pet?.id);
   const {
+    error: recentLogError,
+    loadLogs: loadRecentLogs,
+    logs: recentLogs,
+  } = useRecentHealthLogs(pet?.id, 7);
+  const {
     completeTodo,
     createTodo,
     error: todoError,
@@ -79,7 +85,7 @@ function Home() {
   if (!pet) return <NoPetCard />;
 
   const relationName = profile?.pet_relation_name || '主人';
-  const error = petError || todayLogError || quickRecordError;
+  const error = petError || todayLogError || quickRecordError || recentLogError;
 
   const handleStickerSave = async (payload) => {
     await saveSticker(payload);
@@ -101,6 +107,7 @@ function Home() {
       },
     });
     await loadTodayLog();
+    await loadRecentLogs();
   };
 
   return (
@@ -114,7 +121,7 @@ function Home() {
         </section>
       )}
 
-      <HomeTodayStatusCard loading={todayLogLoading} log={todayLog} pet={pet} />
+      <HomeTodayStatusCard loading={todayLogLoading} log={todayLog} pet={pet} recentLogs={recentLogs} todos={todos} />
 
       <HomeQuickRecordCard
         hasTodayLog={Boolean(todayLog)}
