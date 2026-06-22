@@ -6,12 +6,20 @@ import {
 } from '../lib/cloudbase.js';
 
 function getCloudBaseError(error) {
-  const message = error?.message || '';
+  const message = error?.message || error?.msg || error?.errmsg || '';
+  const code = error?.code || error?.errorCode || error?.errCode;
   if (message.includes('SDK')) return message;
   if (message.includes('network') || message.includes('fetch')) {
     return '无法连接 CloudBase，请检查网络或 CloudBase 环境配置。';
   }
-  return message || 'CloudBase 操作失败';
+  if (message) return code ? `${message}（${code}）` : message;
+  if (code) return `CloudBase 返回错误码：${code}`;
+
+  try {
+    return `CloudBase 操作失败：${JSON.stringify(error)}`;
+  } catch {
+    return 'CloudBase 操作失败，请检查邮箱是否已验证，或查看控制台身份认证配置。';
+  }
 }
 
 function CloudBaseAuthPanel() {
@@ -56,6 +64,9 @@ function CloudBaseAuthPanel() {
       <h2 className="mt-1 font-title text-xl font-semibold text-paw-primary">国内认证通路测试</h2>
       <p className="mt-2 text-xs leading-5 text-paw-muted">
         这一步只验证 CloudBase 邮箱注册/登录，不会进入 PawCare 主应用，也不会影响现有数据。
+      </p>
+      <p className="mt-2 text-xs leading-5 text-paw-muted">
+        如果注册成功但登录失败，请先确认邮箱验证已完成，并确认 CloudBase 身份认证开启的是邮箱密码登录。
       </p>
 
       {!hasCloudBaseConfig && (
